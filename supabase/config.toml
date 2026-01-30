@@ -1,1 +1,4 @@
 project_id = "bpdnimqwkyfrgziumzio"
+
+[functions.generate-keypair]
+verify_jwt = false
