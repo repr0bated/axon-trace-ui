@@ -1,6 +1,5 @@
 /**
- * Operation-DBUS API types.
- * Mirrors the Rust backend's data model for D-Bus services, agents, tools, etc.
+ * Operation-DBUS API types — mirrors the Rust backend data model.
  */
 
 // ── D-Bus Core ──────────────────────────────────────────
@@ -15,24 +14,10 @@ export interface DbusService {
   objectPaths: string[];
 }
 
-export interface DbusObject {
-  path: string;
-  interfaces: string[];
-  serviceId: string;
-}
-
-export interface DbusInterface {
-  name: string;
-  methods: DbusMethod[];
-  signals: DbusSignal[];
-  properties: DbusProperty[];
-}
-
 export interface DbusMethod {
   name: string;
   inSignature: string;
   outSignature: string;
-  annotations: Record<string, string>;
 }
 
 export interface DbusSignal {
@@ -47,7 +32,7 @@ export interface DbusProperty {
   value?: unknown;
 }
 
-// ── Tools & Agents ──────────────────────────────────────
+// ── Tools ───────────────────────────────────────────────
 export interface Tool {
   id: string;
   name: string;
@@ -59,6 +44,18 @@ export interface Tool {
   source: "builtin" | "dbus" | "mcp" | "custom";
 }
 
+export interface ToolExecution {
+  id: string;
+  toolId: string;
+  input: Record<string, unknown>;
+  output: unknown;
+  status: "pending" | "running" | "completed" | "error";
+  error?: string;
+  duration?: number;
+  timestamp: string;
+}
+
+// ── Agents ──────────────────────────────────────────────
 export interface Agent {
   id: string;
   name: string;
@@ -68,8 +65,10 @@ export interface Agent {
   tools: string[];
   lastActive: string | null;
   errorMessage?: string;
+  identity?: { name?: string; emoji?: string; avatar?: string };
 }
 
+// ── LLM ─────────────────────────────────────────────────
 export interface LlmProvider {
   id: string;
   name: string;
@@ -77,6 +76,14 @@ export interface LlmProvider {
   endpoint: string;
   status: "connected" | "disconnected" | "error";
   tokenUsage: { prompt: number; completion: number; total: number };
+}
+
+export interface LlmModel {
+  id: string;
+  name: string;
+  provider: string;
+  contextWindow: number;
+  active: boolean;
 }
 
 // ── Sessions & Chat ─────────────────────────────────────
@@ -88,6 +95,7 @@ export interface Session {
   lastMessageAt: string | null;
   messageCount: number;
   tokenUsage: { prompt: number; completion: number };
+  label?: string;
 }
 
 export interface ChatMessage {
@@ -96,6 +104,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   toolCalls?: ToolCall[];
+  thinking?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -120,28 +129,36 @@ export interface HealthSnapshot {
   cpuPercent: number;
 }
 
+export interface StatusSummary {
+  connected: boolean;
+  gateway: string;
+  authMode: string;
+  securityAudit?: { summary?: Record<string, number> };
+}
+
 export interface LogEntry {
   id: string;
-  timestamp: string;
-  level: "trace" | "debug" | "info" | "warn" | "error";
-  source: string;
+  time: string;
+  level: LogLevel;
+  subsystem: string;
   message: string;
+  raw: string;
   metadata?: Record<string, unknown>;
 }
 
-export type LogLevel = LogEntry["level"];
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
-export interface EventEntry {
+export interface EventLogEntry {
   id: string;
-  type: string;
-  timestamp: string;
-  data: unknown;
+  event: string;
+  ts: number;
+  payload: unknown;
 }
 
 // ── Config ──────────────────────────────────────────────
 export interface ConfigSnapshot {
   config: Record<string, unknown>;
-  schema: JsonSchema;
+  schema?: JsonSchema;
   version: string;
   lastModified: string;
 }
@@ -167,12 +184,13 @@ export interface JsonSchema {
 export type SseEventType =
   | "health"
   | "log"
+  | "state_update"
+  | "audit_event"
+  | "system_stats"
+  | "message"
   | "service_change"
   | "agent_status"
-  | "chat_message"
-  | "tool_call"
-  | "state_update"
-  | "system_stats";
+  | "tool_call";
 
 export interface SseEvent<T = unknown> {
   type: SseEventType;
