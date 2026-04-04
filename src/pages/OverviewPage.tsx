@@ -192,6 +192,98 @@ export default function OverviewPage() {
         </Card>
       </div>
 
+      {/* ── Row 3.5: Connected Peers ──────────────────── */}
+      {(() => {
+        const peersRaw = latestState["peers"] ?? latestState["peers.connected"] ?? latestState["connected_peers"];
+        const peers: ConnectedPeer[] = Array.isArray(peersRaw) ? (peersRaw as ConnectedPeer[]) : [];
+        const togglePeer = (id: string) => setExpandedPeers((prev) => {
+          const next = new Set(prev);
+          next.has(id) ? next.delete(id) : next.add(id);
+          return next;
+        });
+        const formatDuration = (iso: string) => {
+          const ms = Date.now() - new Date(iso).getTime();
+          const s = Math.floor(ms / 1000);
+          if (s < 60) return `${s}s`;
+          if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+          return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+        };
+        const protocolColor: Record<string, string> = {
+          grpc: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+          mcp: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+          ws: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+          sse: "bg-green-500/20 text-green-400 border-green-500/30",
+        };
+
+        return (
+          <Card
+            title="Connected Peers"
+            subtitle="Active gRPC, MCP, and streaming connections."
+            actions={
+              <div className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                <Badge variant="outline" className="text-[10px] font-mono">{peers.length} peers</Badge>
+              </div>
+            }
+          >
+            {peers.length === 0 ? (
+              <div className="text-sm text-muted-foreground mt-2 font-mono">
+                No connected peers. Peer data will appear when the control plane reports active connections.
+              </div>
+            ) : (
+              <Table className="mt-2">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8" />
+                    <TableHead className="text-[11px]">Client ID</TableHead>
+                    <TableHead className="text-[11px]">Type</TableHead>
+                    <TableHead className="text-[11px]">Protocol</TableHead>
+                    <TableHead className="text-[11px]">Duration</TableHead>
+                    <TableHead className="text-[11px] text-right">Streams</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {peers.map((peer) => {
+                    const isOpen = expandedPeers.has(peer.id);
+                    return (
+                      <Collapsible key={peer.id} open={isOpen} onOpenChange={() => togglePeer(peer.id)} asChild>
+                        <>
+                          <CollapsibleTrigger asChild>
+                            <TableRow className="cursor-pointer hover:bg-muted/20">
+                              <TableCell className="py-2">
+                                <ChevronRight className={cn("h-3 w-3 text-muted-foreground transition-transform", isOpen && "rotate-90")} />
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">{peer.client_id}</TableCell>
+                              <TableCell><Badge variant="secondary" className="text-[10px]">{peer.type}</Badge></TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={cn("text-[10px] font-mono border", protocolColor[peer.protocol] ?? "")}>
+                                  {peer.protocol}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{formatDuration(peer.connected_at)}</TableCell>
+                              <TableCell className="text-right font-mono text-xs">{peer.active_streams}</TableCell>
+                            </TableRow>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent asChild>
+                            <TableRow>
+                              <TableCell colSpan={6} className="p-0">
+                                <div className="px-8 py-3 border-t border-border bg-muted/10">
+                                  <JsonRenderer data={peer.state ?? { info: "No extended state available" }} defaultMode="tree" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          </CollapsibleContent>
+                        </>
+                      </Collapsible>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* ── Row 4: Event tape + live state ─────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <EventTape events={events} />
