@@ -4,6 +4,7 @@ import { SchemaRenderer } from "@/components/json/SchemaRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { useEventStore } from "@/stores/event-store";
 import {
   Dialog,
   DialogContent,
