@@ -122,10 +122,17 @@ const COGNITIVE_AGENTS: CognitiveAgent[] = [
   },
 ];
 
-const STATUS_MAP: Record<CognitiveAgent["status"], "ok" | "warning" | "error" | "default"> = {
+const STATUS_DOT: Record<CognitiveAgent["status"], "ok" | "warn" | "error" | "offline"> = {
   running: "ok",
-  busy: "warning",
+  busy: "warn",
   error: "error",
+  offline: "offline",
+};
+
+const STATUS_PILL: Record<CognitiveAgent["status"], "ok" | "warn" | "danger" | "default"> = {
+  running: "ok",
+  busy: "warn",
+  error: "danger",
   offline: "default",
 };
 
