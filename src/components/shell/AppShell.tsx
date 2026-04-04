@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   MessageSquare, BarChart3, Link2, Radio, FileText, Clock,
   Folder, Zap, Monitor, Settings, Bug, ScrollText, Sun, Moon, Laptop,
-  Menu, Shield,
+  Menu, Shield, GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot, Pill } from "@/components/shell/Primitives";
