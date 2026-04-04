@@ -1,30 +1,117 @@
-import { useState } from "react";
-import { PageHeader, Card, Pill, Callout } from "@/components/shell/Primitives";
+import { useState, useMemo } from "react";
+import { PageHeader, Pill } from "@/components/shell/Primitives";
+import { SchemaRenderer } from "@/components/json/SchemaRenderer";
+import { useEventStore } from "@/stores/event-store";
 import { cn } from "@/lib/utils";
-import { Settings, Shield, Zap, Bot, Globe, Terminal } from "lucide-react";
+import { Settings, Shield, Zap, Bot, Globe, Terminal, Network } from "lucide-react";
 
 const SECTIONS = [
-  { key: "env", label: "Environment", icon: Globe },
-  { key: "auth", label: "Authentication", icon: Shield },
+  { key: "general", label: "General", icon: Settings },
+  { key: "dbus", label: "D-Bus", icon: Terminal },
+  { key: "llm", label: "LLM", icon: Zap },
   { key: "agents", label: "Agents", icon: Bot },
-  { key: "tools", label: "Tools", icon: Zap },
-  { key: "gateway", label: "Gateway", icon: Terminal },
+  { key: "security", label: "Security", icon: Shield },
+  { key: "network", label: "Network", icon: Network },
 ];
 
-const MOCK_CONFIG: Record<string, Record<string, unknown>> = {
-  env: { logLevel: "info", dataDir: "/var/lib/operation-dbus", pidFile: "/run/operation-dbus.pid" },
-  auth: { mode: "wireguard", trustedProxy: true, allowedCidrs: ["100.64.0.0/10"] },
-  agents: { defaultModel: "gpt-4o", maxConcurrent: 5, sessionTimeout: 3600 },
-  tools: { approvalRequired: ["system.exec"], autoEnable: true },
-  gateway: { listenAddr: "127.0.0.1:18789", wsEnabled: true, sseEnabled: true },
+const SECTION_SCHEMAS: Record<string, Record<string, unknown>> = {
+  general: {
+    type: "object",
+    properties: {
+      log_level: { type: "string", title: "Log Level", enum: ["trace", "debug", "info", "warn", "error"] },
+      data_dir: { type: "string", title: "Data Directory" },
+      pid_file: { type: "string", title: "PID File" },
+      telemetry_enabled: { type: "boolean", title: "Telemetry Enabled" },
+      max_workers: { type: "number", title: "Max Workers", minimum: 1, maximum: 64 },
+    },
+  },
+  dbus: {
+    type: "object",
+    properties: {
+      system_bus: { type: "boolean", title: "System Bus" },
+      session_bus: { type: "boolean", title: "Session Bus" },
+      bus_address: { type: "string", title: "Bus Address" },
+      introspection_cache: { type: "boolean", title: "Introspection Cache" },
+      trace_signals: { type: "boolean", title: "Trace Signals" },
+      trace_buffer_size: { type: "number", title: "Trace Buffer Size", minimum: 100, maximum: 100000 },
+      sampling_rate: { type: "number", title: "Sampling Rate (%)", minimum: 1, maximum: 100 },
+    },
+  },
+  llm: {
+    type: "object",
+    properties: {
+      default_model: { type: "string", title: "Default Model", enum: ["gpt-4o", "gpt-4o-mini", "claude-sonnet-4", "gemini-2.5-pro"] },
+      temperature: { type: "number", title: "Temperature", minimum: 0, maximum: 2 },
+      max_tokens: { type: "number", title: "Max Tokens", minimum: 256, maximum: 128000 },
+      streaming: { type: "boolean", title: "Streaming Enabled" },
+      rate_limit_rpm: { type: "number", title: "Rate Limit (RPM)", minimum: 1, maximum: 10000 },
+      fallback_model: { type: "string", title: "Fallback Model", enum: ["gpt-4o-mini", "gemini-2.5-flash", "none"] },
+    },
+  },
+  agents: {
+    type: "object",
+    properties: {
+      max_concurrent: { type: "number", title: "Max Concurrent Agents", minimum: 1, maximum: 50 },
+      session_timeout: { type: "number", title: "Session Timeout (s)", minimum: 60, maximum: 86400 },
+      memory_backend: { type: "string", title: "Memory Backend", enum: ["qdrant", "redis", "in-memory"] },
+      auto_restart: { type: "boolean", title: "Auto Restart on Failure" },
+      heartbeat_interval: { type: "number", title: "Heartbeat Interval (s)", minimum: 5, maximum: 300 },
+      max_context_window: { type: "number", title: "Max Context Window", minimum: 4096, maximum: 200000 },
+    },
+  },
+  security: {
+    type: "object",
+    properties: {
+      auth_mode: { type: "string", title: "Auth Mode", enum: ["oidc", "gcloud-adc", "wireguard", "none"] },
+      tls_enabled: { type: "boolean", title: "TLS Enabled" },
+      tls_cert_path: { type: "string", title: "TLS Certificate Path" },
+      tls_key_path: { type: "string", title: "TLS Key Path" },
+      audit_chain: { type: "boolean", title: "Blockchain Audit Enabled" },
+      exec_approval: { type: "boolean", title: "Require Exec Approval" },
+      allowed_cidrs: { type: "string", title: "Allowed CIDRs (comma-separated)" },
+    },
+  },
+  network: {
+    type: "object",
+    properties: {
+      listen_addr: { type: "string", title: "Listen Address" },
+      ws_enabled: { type: "boolean", title: "WebSocket Enabled" },
+      sse_enabled: { type: "boolean", title: "SSE Enabled" },
+      cors_origin: { type: "string", title: "CORS Origin" },
+      proxy_protocol: { type: "boolean", title: "Proxy Protocol" },
+      max_connections: { type: "number", title: "Max Connections", minimum: 10, maximum: 100000 },
+      idle_timeout: { type: "number", title: "Idle Timeout (s)", minimum: 10, maximum: 3600 },
+    },
+  },
+};
+
+const DEFAULT_VALUES: Record<string, Record<string, unknown>> = {
+  general: { log_level: "info", data_dir: "/var/lib/operation-dbus", pid_file: "/run/operation-dbus.pid", telemetry_enabled: true, max_workers: 8 },
+  dbus: { system_bus: true, session_bus: false, bus_address: "unix:path=/var/run/dbus/system_bus_socket", introspection_cache: true, trace_signals: true, trace_buffer_size: 10000, sampling_rate: 50 },
+  llm: { default_model: "gpt-4o", temperature: 0.7, max_tokens: 8192, streaming: true, rate_limit_rpm: 60, fallback_model: "gpt-4o-mini" },
+  agents: { max_concurrent: 5, session_timeout: 3600, memory_backend: "qdrant", auto_restart: true, heartbeat_interval: 30, max_context_window: 128000 },
+  security: { auth_mode: "wireguard", tls_enabled: true, tls_cert_path: "/etc/ssl/certs/op-dbus.pem", tls_key_path: "/etc/ssl/private/op-dbus.key", audit_chain: true, exec_approval: true, allowed_cidrs: "100.64.0.0/10, 10.10.0.0/24" },
+  network: { listen_addr: "127.0.0.1:18789", ws_enabled: true, sse_enabled: true, cors_origin: "*", proxy_protocol: false, max_connections: 1000, idle_timeout: 300 },
 };
 
 export default function ConfigPage() {
-  const [activeSection, setActiveSection] = useState("env");
-  const [mode, setMode] = useState<"form" | "raw">("form");
-  const [rawValue, setRawValue] = useState(JSON.stringify(MOCK_CONFIG, null, 2));
+  const { latestState } = useEventStore();
+  const [activeSection, setActiveSection] = useState("general");
+  const [mode, setMode] = useState<"structured" | "raw">("structured");
+  const [localValues, setLocalValues] = useState<Record<string, Record<string, unknown>>>({});
 
-  const sectionData = MOCK_CONFIG[activeSection] || {};
+  const sectionData = useMemo(() => {
+    const live = latestState[`config.${activeSection}`] ?? latestState[`config:${activeSection}`];
+    const base = DEFAULT_VALUES[activeSection] ?? {};
+    const liveOverlay = live && typeof live === "object" ? (live as Record<string, unknown>) : {};
+    return { ...base, ...liveOverlay, ...(localValues[activeSection] ?? {}) };
+  }, [activeSection, latestState, localValues]);
+
+  const rawValue = useMemo(() => JSON.stringify(sectionData, null, 2), [sectionData]);
+
+  const handleChange = (val: unknown) => {
+    setLocalValues((p) => ({ ...p, [activeSection]: val as Record<string, unknown> }));
+  };
 
   return (
     <>
@@ -48,9 +135,11 @@ export default function ConfigPage() {
           </div>
           <div className="p-3 border-t border-border">
             <div className="flex rounded-md border border-border bg-card overflow-hidden">
-              {(["form", "raw"] as const).map((m) => (
+              {(["structured", "raw"] as const).map((m) => (
                 <button key={m} onClick={() => setMode(m)} className={cn("flex-1 py-2 text-xs font-semibold transition-colors",
-                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{m === "form" ? "Form" : "Raw"}</button>
+                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                  {m === "structured" ? "Structured" : "Raw JSON"}
+                </button>
               ))}
             </div>
           </div>
@@ -63,33 +152,22 @@ export default function ConfigPage() {
               <span className="text-base font-semibold text-foreground">{SECTIONS.find((s) => s.key === activeSection)?.label}</span>
             </div>
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted/30 transition-colors">Reload</button>
+              <button onClick={() => setLocalValues((p) => { const n = { ...p }; delete n[activeSection]; return n; })}
+                className="px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted/30 transition-colors">Reset</button>
               <button className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">Save</button>
               <button className="px-3 py-1.5 rounded-md border border-primary/30 text-primary text-xs font-medium hover:bg-primary/10 transition-colors">Apply</button>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-5">
             {mode === "raw" ? (
-              <textarea value={rawValue} onChange={(e) => setRawValue(e.target.value)}
+              <textarea value={rawValue} readOnly
                 className="w-full h-full min-h-[500px] px-3 py-2 rounded-md border border-input bg-card text-sm font-mono resize-y focus:border-ring outline-none" />
             ) : (
-              <div className="space-y-4">
-                {Object.entries(sectionData).map(([key, val]) => (
-                  <label key={key} className="block space-y-1.5">
-                    <span className="text-xs font-medium text-muted-foreground">{key}</span>
-                    {typeof val === "boolean" ? (
-                      <div className="flex items-center gap-2">
-                        <input type="checkbox" defaultChecked={val} className="accent-primary" />
-                        <span className="text-sm text-foreground">{String(val)}</span>
-                      </div>
-                    ) : Array.isArray(val) ? (
-                      <input defaultValue={val.join(", ")} className="w-full px-3 py-2 rounded-md border border-input bg-card text-sm font-mono focus:border-ring outline-none" />
-                    ) : (
-                      <input defaultValue={String(val)} className="w-full px-3 py-2 rounded-md border border-input bg-card text-sm font-mono focus:border-ring outline-none" />
-                    )}
-                  </label>
-                ))}
-              </div>
+              <SchemaRenderer
+                schema={SECTION_SCHEMAS[activeSection] as any}
+                data={sectionData}
+                onChange={handleChange}
+              />
             )}
           </div>
         </div>
