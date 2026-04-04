@@ -136,7 +136,20 @@ export default function ChatPage() {
           <div className={cn("flex flex-col flex-1 min-w-0", sidebarOpen && "flex-[0_0_60%]")}>
             <div ref={threadRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4" role="log">
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} onInspect={openInSidebar} />
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  onInspect={openInSidebar}
+                  onAction={(action, payload) => {
+                    const actionMsg: LocalMessage = {
+                      id: `msg-${Date.now()}-action`,
+                      role: "user",
+                      content: `[Action: ${action}] ${JSON.stringify(payload)}`,
+                      timestamp: Date.now(),
+                    };
+                    setMessages((prev) => [...prev, actionMsg]);
+                  }}
+                />
               ))}
               {sending && (
                 <div className="flex gap-3">
