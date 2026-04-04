@@ -115,7 +115,7 @@ export default function GrpcDiagnosticsPage() {
       let response: unknown;
       switch (`${probe.service}.${probe.method}`) {
         case "StateSync.GetState":
-          response = await stateSync.getState({ pluginId: "", path: "" });
+          response = await stateSync.getState({ pluginId: "", objectPath: "" });
           break;
         case "PluginService.ListPlugins":
           response = await pluginService.listPlugins();
