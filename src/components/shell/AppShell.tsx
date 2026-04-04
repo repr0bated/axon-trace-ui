@@ -34,6 +34,7 @@ const NAV_GROUPS = [
       { title: "Tools", path: "/tools", icon: Zap },
       { title: "Workflows", path: "/workflows", icon: GitBranch },
       { title: "Security", path: "/security", icon: Shield },
+      { title: "Skills", path: "/skills", icon: ScrollText },
     ],
   },
   {

@@ -19,6 +19,7 @@ import StatePage from "./pages/StatePage";
 import LogsPage from "./pages/LogsPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
 import OrchestrationPage from "./pages/OrchestrationPage";
+import SkillsPage from "./pages/SkillsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -44,6 +45,7 @@ function AppInner() {
         <Route path="/logs" element={<LogsPage />} />
         <Route path="/workflows" element={<WorkflowsPage />} />
         <Route path="/orchestration" element={<OrchestrationPage />} />
+        <Route path="/skills" element={<SkillsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppShell>
