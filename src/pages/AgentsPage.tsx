@@ -138,14 +138,32 @@ const STATUS_PILL: Record<CognitiveAgent["status"], "ok" | "warn" | "danger" | "
 };
 
 export default function AgentsPage() {
+  const latestState = useEventStore((s) => s.latestState);
   const [configAgent, setConfigAgent] = useState<CognitiveAgent | null>(null);
   const [configs, setConfigs] = useState<Record<string, Record<string, unknown>>>(
     Object.fromEntries(COGNITIVE_AGENTS.map((a) => [a.id, { ...a.configData }]))
   );
 
-  const running = COGNITIVE_AGENTS.filter((a) => a.status === "running").length;
-  const totalSessions = COGNITIVE_AGENTS.reduce((s, a) => s + a.activeSessions, 0);
-  const totalMemory = COGNITIVE_AGENTS.reduce((s, a) => s + a.memoryEntries, 0);
+  // Merge live state into agent definitions
+  const agents = useMemo(() => {
+    return COGNITIVE_AGENTS.map((agent) => {
+      const liveData = latestState[`agent.${agent.id}`] ?? latestState[`agents:${agent.id}`];
+      if (liveData && typeof liveData === "object") {
+        const live = liveData as Record<string, unknown>;
+        return {
+          ...agent,
+          status: (live.status as CognitiveAgent["status"]) ?? agent.status,
+          activeSessions: (live.activeSessions as number) ?? (live.active_sessions as number) ?? agent.activeSessions,
+          memoryEntries: (live.memoryEntries as number) ?? (live.memory_entries as number) ?? agent.memoryEntries,
+        };
+      }
+      return agent;
+    });
+  }, [latestState]);
+
+  const running = agents.filter((a) => a.status === "running").length;
+  const totalSessions = agents.reduce((s, a) => s + a.activeSessions, 0);
+  const totalMemory = agents.reduce((s, a) => s + a.memoryEntries, 0);
 
   return (
     <>
