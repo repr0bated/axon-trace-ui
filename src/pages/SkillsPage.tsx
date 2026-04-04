@@ -185,13 +185,17 @@ export default function SkillsPage() {
   const selected = skills.find((s) => s.id === selectedId);
 
   const toggleEnabled = (id: string) => {
-    setSkills((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+    setSkillOverrides((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], enabled: !(skills.find((s) => s.id === id)?.enabled ?? false) },
+    }));
   };
 
   const updateConfig = (id: string, data: unknown) => {
-    setSkills((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, configData: data as Record<string, unknown> } : s))
-    );
+    setSkillOverrides((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], configData: data as Record<string, unknown> },
+    }));
   };
 
   const handleTestSend = () => {

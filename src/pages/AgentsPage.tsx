@@ -187,7 +187,7 @@ export default function AgentsPage() {
 
       {/* Agent grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {COGNITIVE_AGENTS.map((agent) => (
+        {agents.map((agent) => (
           <Card key={agent.id}>
             <div className="flex items-start gap-3">
               <StatusDot status={STATUS_DOT[agent.status]} className="mt-1.5" />

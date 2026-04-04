@@ -316,7 +316,7 @@ export default function StatePage() {
   }, []);
 
   const handlePluginChange = useCallback((pluginId: string, updated: unknown) => {
-    setPluginState((prev) => ({
+    setLocalOverrides((prev) => ({
       ...prev,
       [pluginId]: updated as Record<string, unknown>,
     }));
