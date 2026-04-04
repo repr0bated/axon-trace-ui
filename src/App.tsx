@@ -8,6 +8,7 @@ import { useEventStream } from "@/hooks/use-event-stream";
 import OverviewPage from "./pages/OverviewPage";
 import ChatPage from "./pages/ChatPage";
 import ToolsPage from "./pages/ToolsPage";
+import RoutableModelsPage from "./pages/RoutableModelsPage";
 import AgentsPage from "./pages/AgentsPage";
 import LlmPage from "./pages/LlmPage";
 import ServicesPage from "./pages/ServicesPage";
