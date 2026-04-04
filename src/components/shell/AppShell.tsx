@@ -38,6 +38,15 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "Infrastructure",
+    items: [
+      { title: "Containers", path: "/containers", icon: Box },
+      { title: "Privacy Network", path: "/privacy-network", icon: Globe },
+      { title: "Open vSwitch", path: "/ovs", icon: Network },
+      { title: "OpenFlow", path: "/openflow", icon: Workflow },
+    ],
+  },
+  {
     label: "Settings",
     items: [
       { title: "Config", path: "/config", icon: Settings },
