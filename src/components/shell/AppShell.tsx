@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   MessageSquare, BarChart3, Link2, Radio, FileText, Clock,
   Folder, Zap, Monitor, Settings, Bug, ScrollText, Sun, Moon, Laptop,
-  Menu, Shield, GitBranch, Orbit, Box, Globe, Network, Workflow,
+  Menu, Shield, GitBranch, Orbit, Box, Globe, Network, Workflow, Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot, Pill } from "@/components/shell/Primitives";
@@ -35,6 +35,7 @@ const NAV_GROUPS = [
       { title: "Workflows", path: "/workflows", icon: GitBranch },
       { title: "Security", path: "/security", icon: Shield },
       { title: "Skills", path: "/skills", icon: ScrollText },
+      { title: "Knowledge", path: "/knowledge", icon: Brain },
     ],
   },
   {
