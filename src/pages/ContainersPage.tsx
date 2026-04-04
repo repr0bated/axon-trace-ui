@@ -32,8 +32,8 @@ const DEFAULT_CONTAINERS: IncusInstance[] = [
   { id: "ct-5", name: "monitoring", type: "system", status: "frozen", os: "Alpine 3.19", cpu_limit: 1, memory_limit: "256MB", disk_limit: "2GB", ip: "10.10.0.5", created_at: "2025-01-20T00:00:00Z", config: { "limits.cpu": 1, "limits.memory": "256MB" }, devices: { root: { type: "disk", pool: "default", path: "/" } } },
 ];
 
-const statusColor: Record<string, "ok" | "warning" | "error" | "muted"> = {
-  running: "ok", stopped: "muted", frozen: "warning", error: "error",
+const statusColor: Record<string, "ok" | "warn" | "error" | "offline"> = {
+  running: "ok", stopped: "offline", frozen: "warn", error: "error",
 };
 
 function configSchema(config: Record<string, unknown>): Record<string, unknown> {

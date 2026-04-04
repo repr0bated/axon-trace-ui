@@ -81,7 +81,7 @@ export default function OpenSwitchPage() {
         {bridges.map((br) => (
           <Card key={br.id} title={br.name} subtitle={`Datapath: ${br.datapath}`} actions={
             <div className="flex items-center gap-2">
-              <StatusDot status={br.status === "active" ? "ok" : "muted"} />
+              <StatusDot status={br.status === "active" ? "ok" : "offline"} />
               <Badge variant="outline" className="text-[10px] font-mono">{br.status}</Badge>
             </div>
           }>

@@ -30,7 +30,7 @@ interface PNodeData {
 
 function PrivacyNode({ data, selected }: NodeProps<Node<PNodeData>>) {
   const Icon = data.icon;
-  const statusMap = { online: "ok", degraded: "warning", offline: "error" } as const;
+  const statusMap = { online: "ok", degraded: "warn", offline: "error" } as const;
   const busy = data.status === "degraded";
 
   return (
