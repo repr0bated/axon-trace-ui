@@ -9,6 +9,9 @@ import {
   Shield, Clock, Zap, Database, Radio, Layers, RefreshCw,
   ArrowUpRight, ArrowDownRight, Minus
 } from "lucide-react";
+import { WidgetHost } from "@/components/widgets/WidgetHost";
+import { useMockGrpcStream } from "@/hooks/use-mock-grpc-stream";
+import type { Widget } from "@/types/widgets";
 
 function formatUptime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -72,9 +75,21 @@ const MOCK_METRICS = {
   alertsCritical: 0,
 };
 
+const LIVE_WIDGETS: Widget[] = [
+  { type: "kpi", title: "Load Average", bindingKey: "dinit:/system/core:load_avg", unit: "" },
+  { type: "kpi", title: "Active Services", bindingKey: "dinit:/system/core:active_services" },
+  { type: "kpi", title: "OVS Ports", bindingKey: "ovs:/bridges/br0:port_count" },
+  { type: "system_stats" },
+  { type: "timeseries", title: "Load Average", bindingKey: "dinit:/system/core:load_avg", color: "hsl(var(--primary))" },
+  { type: "timeseries", title: "Active Services", bindingKey: "dinit:/system/core:active_services", color: "hsl(var(--ok))" },
+];
+
 export default function OverviewPage() {
   const { connected, health, events, latestState, latestStats, lastError, eventCounts, logs } = useEventStore();
   const [clock, setClock] = useState(new Date());
+
+  // Start mock stream simulator
+  useMockGrpcStream();
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
@@ -267,7 +282,16 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* Row 6: Operational notes */}
+      {/* Row 6: Live Registry Widgets */}
+      <Card title="Live Registry" subtitle="Schema-driven widgets bound to live state keys.">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+          {LIVE_WIDGETS.map((w, i) => (
+            <WidgetHost key={i} widget={w} />
+          ))}
+        </div>
+      </Card>
+
+      {/* Row 7: Operational notes */}
       <Card title="Operational Notes">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
           <div className="rounded-md border border-border bg-background/50 p-3">
