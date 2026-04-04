@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SchemaRenderer } from "@/components/json/SchemaRenderer";
 import { useEventStore } from "@/stores/event-store";
-import { ChevronRight, Plus, Shield, Zap } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FlowEntry {
@@ -23,15 +23,6 @@ interface FlowTable {
   name: string;
   flows: FlowEntry[];
 }
-
-const DEFAULT_GLOBAL_CONFIG = {
-  controller: "tcp:127.0.0.1:6653",
-  fail_mode: "secure",
-  stp_enable: false,
-  flow_eviction_threshold: 2500,
-  n_tables: 254,
-  protocols: "OpenFlow13,OpenFlow15",
-};
 
 const globalConfigSchema = {
   type: "object",
@@ -61,23 +52,6 @@ const flowEntrySchema = {
   },
 };
 
-const DEFAULT_TABLES: FlowTable[] = [
-  { id: 0, name: "Classifier", flows: [
-    { id: "f1", table: 0, priority: 100, match_fields: { dl_type: "0x0800", nw_dst: "10.10.0.0/24" }, actions: ["resubmit(,1)"], packet_count: 145230, byte_count: 18200000 },
-    { id: "f2", table: 0, priority: 50, match_fields: { dl_type: "0x0806" }, actions: ["NORMAL"], packet_count: 3400, byte_count: 204000 },
-    { id: "f3", table: 0, priority: 0, match_fields: {}, actions: ["drop"], packet_count: 890, byte_count: 53400 },
-  ] },
-  { id: 1, name: "Routing", flows: [
-    { id: "f4", table: 1, priority: 200, match_fields: { nw_dst: "10.10.0.2" }, actions: ["output:2"], packet_count: 80200, byte_count: 9600000 },
-    { id: "f5", table: 1, priority: 200, match_fields: { nw_dst: "10.10.0.3" }, actions: ["output:3"], packet_count: 65030, byte_count: 8580000 },
-    { id: "f6", table: 1, priority: 100, match_fields: { nw_dst: "10.10.0.0/24" }, actions: ["resubmit(,2)"], packet_count: 12000, byte_count: 1440000 },
-  ] },
-  { id: 2, name: "Security", flows: [
-    { id: "f7", table: 2, priority: 300, match_fields: { nw_src: "10.10.0.0/24", tp_dst: "22" }, actions: ["output:1"], packet_count: 500, byte_count: 32000 },
-    { id: "f8", table: 2, priority: 0, match_fields: {}, actions: ["drop"], packet_count: 120, byte_count: 7200 },
-  ] },
-];
-
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -86,15 +60,24 @@ function formatCount(n: number): string {
 
 export default function OpenFlowPage() {
   const { latestState } = useEventStore();
-  const [globalConfig, setGlobalConfig] = useState(DEFAULT_GLOBAL_CONFIG);
+
+  const globalConfig = useMemo(() => {
+    const live = latestState["openflow.config"] ?? latestState["openflow:config"];
+    if (live && typeof live === "object") return live as Record<string, unknown>;
+    return {};
+  }, [latestState]);
+
+  const [localConfig, setLocalConfig] = useState<Record<string, unknown>>({});
   const [addFlowOpen, setAddFlowOpen] = useState(false);
   const [newFlow, setNewFlow] = useState<Record<string, unknown>>({});
   const [openTables, setOpenTables] = useState<Record<number, boolean>>({ 0: true });
 
+  const mergedConfig = useMemo(() => ({ ...globalConfig, ...localConfig }), [globalConfig, localConfig]);
+
   const tables = useMemo(() => {
     const live = latestState["openflow.tables"] ?? latestState["openflow:tables"];
     if (Array.isArray(live)) return live as FlowTable[];
-    return DEFAULT_TABLES;
+    return [] as FlowTable[];
   }, [latestState]);
 
   return (
@@ -102,13 +85,13 @@ export default function OpenFlowPage() {
       <PageHeader title="OpenFlow" subtitle="Flow table explorer and rule management." />
 
       <Card title="Global Configuration" subtitle="OpenFlow controller and protocol settings." actions={
-        <Badge variant="outline" className="text-[10px] font-mono">{globalConfig.protocols}</Badge>
+        mergedConfig.protocols ? <Badge variant="outline" className="text-[10px] font-mono">{String(mergedConfig.protocols)}</Badge> : null
       }>
         <div className="mt-3">
           <SchemaRenderer
             schema={globalConfigSchema as any}
-            data={globalConfig}
-            onChange={(v) => setGlobalConfig(v as typeof globalConfig)}
+            data={mergedConfig}
+            onChange={(v) => setLocalConfig(v as Record<string, unknown>)}
           />
         </div>
       </Card>
@@ -121,6 +104,9 @@ export default function OpenFlowPage() {
       </div>
 
       <div className="space-y-3">
+        {tables.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-8">No flow tables received. Waiting for live data…</div>
+        )}
         {tables.map((table) => (
           <Collapsible key={table.id} open={openTables[table.id] ?? false} onOpenChange={(o) => setOpenTables((p) => ({ ...p, [table.id]: o }))}>
             <CollapsibleTrigger className="w-full flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/20 transition-colors">

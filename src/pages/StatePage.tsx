@@ -10,7 +10,7 @@ import type { EventLogEntry } from "@/types/api";
 
 /* ── Schema inference ──────────────────────────────────── */
 
-function inferSchema(data: unknown, mutableKeys?: Set<string>, key?: string): any {
+function inferSchema(data: unknown): any {
   if (data === null || data === undefined) return { type: "string" };
   if (typeof data === "boolean") return { type: "boolean" };
   if (typeof data === "number") return { type: "number", minimum: 0, maximum: typeof data === "number" && data > 100 ? data * 2 : 100 };
@@ -18,15 +18,13 @@ function inferSchema(data: unknown, mutableKeys?: Set<string>, key?: string): an
   if (Array.isArray(data)) return { type: "array", items: data.length > 0 ? inferSchema(data[0]) : { type: "string" } };
   if (typeof data === "object") {
     const props: Record<string, any> = {};
-    for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-      props[k] = inferSchema(v, mutableKeys, k);
-    }
+    for (const [k, v] of Object.entries(data as Record<string, unknown>)) props[k] = inferSchema(v);
     return { type: "object", properties: props };
   }
   return { type: "string" };
 }
 
-/* ── Mock plugin definitions with mutable/immutable props ── */
+/* ── Plugin definitions (structural only — no mock values) ── */
 
 interface PluginDef {
   id: string;
@@ -38,174 +36,63 @@ interface PluginDef {
 
 const PLUGIN_DEFS: PluginDef[] = [
   {
-    id: "net",
-    label: "Network",
-    icon: "🌐",
+    id: "net", label: "Network", icon: "🌐",
     mutableKeys: new Set(["dns_servers", "mtu", "dhcp_enabled", "ipv6_enabled"]),
-    schema: {
-      type: "object",
-      properties: {
-        interface: { type: "string", title: "Interface", readOnly: true },
-        ip_address: { type: "string", title: "IP Address", readOnly: true },
-        mac_address: { type: "string", title: "MAC Address", readOnly: true },
-        mtu: { type: "number", title: "MTU", minimum: 68, maximum: 9000 },
-        dhcp_enabled: { type: "boolean", title: "DHCP Enabled" },
-        ipv6_enabled: { type: "boolean", title: "IPv6 Enabled" },
-        dns_servers: { type: "string", title: "DNS Servers" },
-        rx_bytes: { type: "number", title: "RX Bytes", readOnly: true },
-        tx_bytes: { type: "number", title: "TX Bytes", readOnly: true },
-        link_speed_mbps: { type: "number", title: "Link Speed (Mbps)", readOnly: true },
-      },
-    },
+    schema: { type: "object", properties: { interface: { type: "string", title: "Interface", readOnly: true }, ip_address: { type: "string", title: "IP Address", readOnly: true }, mac_address: { type: "string", title: "MAC Address", readOnly: true }, mtu: { type: "number", title: "MTU", minimum: 68, maximum: 9000 }, dhcp_enabled: { type: "boolean", title: "DHCP Enabled" }, ipv6_enabled: { type: "boolean", title: "IPv6 Enabled" }, dns_servers: { type: "string", title: "DNS Servers" }, rx_bytes: { type: "number", title: "RX Bytes", readOnly: true }, tx_bytes: { type: "number", title: "TX Bytes", readOnly: true }, link_speed_mbps: { type: "number", title: "Link Speed (Mbps)", readOnly: true } } },
   },
   {
-    id: "dinit",
-    label: "Service Manager (dinit)",
-    icon: "⚙️",
+    id: "dinit", label: "Service Manager (dinit)", icon: "⚙️",
     mutableKeys: new Set(["restart_policy", "log_level", "watchdog_interval_s"]),
-    schema: {
-      type: "object",
-      properties: {
-        active_services: { type: "number", title: "Active Services", readOnly: true },
-        failed_services: { type: "number", title: "Failed Services", readOnly: true },
-        uptime_secs: { type: "number", title: "Uptime (s)", readOnly: true },
-        restart_policy: { type: "string", title: "Restart Policy", enum: ["always", "on-failure", "never"] },
-        log_level: { type: "string", title: "Log Level", enum: ["trace", "debug", "info", "warn", "error"] },
-        watchdog_interval_s: { type: "number", title: "Watchdog Interval (s)", minimum: 1, maximum: 300 },
-      },
-    },
+    schema: { type: "object", properties: { active_services: { type: "number", title: "Active Services", readOnly: true }, failed_services: { type: "number", title: "Failed Services", readOnly: true }, uptime_secs: { type: "number", title: "Uptime (s)", readOnly: true }, restart_policy: { type: "string", title: "Restart Policy", enum: ["always", "on-failure", "never"] }, log_level: { type: "string", title: "Log Level", enum: ["trace", "debug", "info", "warn", "error"] }, watchdog_interval_s: { type: "number", title: "Watchdog Interval (s)", minimum: 1, maximum: 300 } } },
   },
   {
-    id: "wireguard",
-    label: "WireGuard VPN",
-    icon: "🔒",
+    id: "wireguard", label: "WireGuard VPN", icon: "🔒",
     mutableKeys: new Set(["listen_port", "persistent_keepalive", "enabled"]),
-    schema: {
-      type: "object",
-      properties: {
-        enabled: { type: "boolean", title: "Enabled" },
-        public_key: { type: "string", title: "Public Key", readOnly: true },
-        endpoint: { type: "string", title: "Endpoint", readOnly: true },
-        listen_port: { type: "number", title: "Listen Port", minimum: 1024, maximum: 65535 },
-        persistent_keepalive: { type: "number", title: "Persistent Keepalive (s)", minimum: 0, maximum: 120 },
-        connected_peers: { type: "number", title: "Connected Peers", readOnly: true },
-        last_handshake: { type: "string", title: "Last Handshake", readOnly: true },
-      },
-    },
+    schema: { type: "object", properties: { enabled: { type: "boolean", title: "Enabled" }, public_key: { type: "string", title: "Public Key", readOnly: true }, endpoint: { type: "string", title: "Endpoint", readOnly: true }, listen_port: { type: "number", title: "Listen Port", minimum: 1024, maximum: 65535 }, persistent_keepalive: { type: "number", title: "Persistent Keepalive (s)", minimum: 0, maximum: 120 }, connected_peers: { type: "number", title: "Connected Peers", readOnly: true }, last_handshake: { type: "string", title: "Last Handshake", readOnly: true } } },
   },
   {
-    id: "dbus",
-    label: "D-Bus Monitor",
-    icon: "🚌",
+    id: "dbus", label: "D-Bus Monitor", icon: "🚌",
     mutableKeys: new Set(["trace_enabled", "max_message_size"]),
-    schema: {
-      type: "object",
-      properties: {
-        system_bus_active: { type: "boolean", title: "System Bus Active", readOnly: true },
-        session_bus_active: { type: "boolean", title: "Session Bus Active", readOnly: true },
-        registered_services: { type: "number", title: "Registered Services", readOnly: true },
-        trace_enabled: { type: "boolean", title: "Trace Enabled" },
-        max_message_size: { type: "number", title: "Max Message Size (bytes)", minimum: 1024, maximum: 134217728 },
-        messages_per_sec: { type: "number", title: "Messages/sec", readOnly: true },
-      },
-    },
+    schema: { type: "object", properties: { system_bus_active: { type: "boolean", title: "System Bus Active", readOnly: true }, session_bus_active: { type: "boolean", title: "Session Bus Active", readOnly: true }, registered_services: { type: "number", title: "Registered Services", readOnly: true }, trace_enabled: { type: "boolean", title: "Trace Enabled" }, max_message_size: { type: "number", title: "Max Message Size (bytes)", minimum: 1024, maximum: 134217728 }, messages_per_sec: { type: "number", title: "Messages/sec", readOnly: true } } },
   },
   {
-    id: "system",
-    label: "System Resources",
-    icon: "📊",
+    id: "system", label: "System Resources", icon: "📊",
     mutableKeys: new Set([]),
-    schema: {
-      type: "object",
-      properties: {
-        cpu_percent: { type: "number", title: "CPU Usage (%)", readOnly: true, minimum: 0, maximum: 100 },
-        memory_used_mb: { type: "number", title: "Memory Used (MB)", readOnly: true },
-        memory_total_mb: { type: "number", title: "Memory Total (MB)", readOnly: true },
-        disk_used_percent: { type: "number", title: "Disk Usage (%)", readOnly: true, minimum: 0, maximum: 100 },
-        load_avg_1m: { type: "number", title: "Load Avg (1m)", readOnly: true },
-        processes: { type: "number", title: "Processes", readOnly: true },
-      },
-    },
+    schema: { type: "object", properties: { cpu_percent: { type: "number", title: "CPU Usage (%)", readOnly: true, minimum: 0, maximum: 100 }, memory_used_mb: { type: "number", title: "Memory Used (MB)", readOnly: true }, memory_total_mb: { type: "number", title: "Memory Total (MB)", readOnly: true }, disk_used_percent: { type: "number", title: "Disk Usage (%)", readOnly: true, minimum: 0, maximum: 100 }, load_avg_1m: { type: "number", title: "Load Avg (1m)", readOnly: true }, processes: { type: "number", title: "Processes", readOnly: true } } },
   },
 ];
-
-/* ── Default/fallback state data per plugin ────────────── */
-
-const DEFAULT_STATE: Record<string, Record<string, unknown>> = {
-  net: {
-    interface: "eth0", ip_address: "—", mac_address: "—",
-    mtu: 0, dhcp_enabled: false, ipv6_enabled: false, dns_servers: "",
-    rx_bytes: 0, tx_bytes: 0, link_speed_mbps: 0,
-  },
-  dinit: {
-    active_services: 0, failed_services: 0, uptime_secs: 0,
-    restart_policy: "on-failure", log_level: "info", watchdog_interval_s: 30,
-  },
-  wireguard: {
-    enabled: false, public_key: "", endpoint: "",
-    listen_port: 51820, persistent_keepalive: 25, connected_peers: 0, last_handshake: "—",
-  },
-  dbus: {
-    system_bus_active: false, session_bus_active: false, registered_services: 0,
-    trace_enabled: false, max_message_size: 16777216, messages_per_sec: 0,
-  },
-  system: {
-    cpu_percent: 0, memory_used_mb: 0, memory_total_mb: 0,
-    disk_used_percent: 0, load_avg_1m: 0, processes: 0,
-  },
-};
 
 /* ── Plugin Accordion Card ─────────────────────────────── */
 
 const PluginCard = memo(function PluginCard({
-  plugin,
-  data,
-  expanded,
-  onToggle,
-  onChange,
-  searchMatch,
+  plugin, data, expanded, onToggle, onChange, searchMatch,
 }: {
-  plugin: PluginDef;
-  data: Record<string, unknown>;
-  expanded: boolean;
-  onToggle: () => void;
-  onChange: (updated: unknown) => void;
-  searchMatch: boolean;
+  plugin: PluginDef; data: Record<string, unknown>; expanded: boolean;
+  onToggle: () => void; onChange: (updated: unknown) => void; searchMatch: boolean;
 }) {
   const propCount = Object.keys(data).length;
   const mutableCount = plugin.mutableKeys.size;
-
   if (!searchMatch) return null;
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
-      >
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
         <span className="text-lg">{plugin.icon}</span>
         <div className="flex-1 text-left">
           <span className="text-sm font-semibold text-foreground">{plugin.label}</span>
           <span className="text-[11px] text-muted-foreground font-mono ml-2">({plugin.id})</span>
         </div>
         <Badge variant="outline" className="text-[10px]">{propCount} props</Badge>
-        {mutableCount > 0 && (
-          <Badge variant="secondary" className="text-[10px]">{mutableCount} tunable</Badge>
-        )}
-        {expanded ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        )}
+        {mutableCount > 0 && <Badge variant="secondary" className="text-[10px]">{mutableCount} tunable</Badge>}
+        {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
       {expanded && (
         <div className="px-4 pb-4 border-t border-border/50">
-          <SchemaRenderer
-            schema={plugin.schema ?? inferSchema(data)}
-            data={data}
-            onChange={onChange}
-            className="mt-3"
-          />
+          {propCount === 0 ? (
+            <div className="text-xs text-muted-foreground py-4 text-center">No data received for this plugin yet.</div>
+          ) : (
+            <SchemaRenderer schema={plugin.schema ?? inferSchema(data)} data={data} onChange={onChange} className="mt-3" />
+          )}
         </div>
       )}
     </div>
@@ -227,41 +114,27 @@ const TapeRow = memo(function TapeRow({ event }: { event: EventLogEntry }) {
     !["health", "state_update", "audit_event", "system_stats"].includes(event.event) && "border-border text-muted-foreground",
   );
 
-  // Extract key/new_value for state_update diffs
   const payload = event.payload as Record<string, unknown> | null;
   const stateKey = payload?.key as string | undefined;
   const newValue = payload?.new_value ?? payload;
 
   return (
     <div className="border-b border-border/30 last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/30 transition-colors text-left"
-      >
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/30 transition-colors text-left">
         <span className="font-mono text-[11px] text-muted-foreground w-20 shrink-0">{time}</span>
         <span className={eventColor}>{event.event}</span>
-        {stateKey && (
-          <Badge variant="outline" className="text-[9px] font-mono shrink-0">{stateKey}</Badge>
-        )}
+        {stateKey && <Badge variant="outline" className="text-[9px] font-mono shrink-0">{stateKey}</Badge>}
         <span className="text-xs text-muted-foreground truncate flex-1 font-mono">
           {typeof event.payload === "string" ? event.payload : JSON.stringify(event.payload)?.slice(0, 60)}
         </span>
-        {open ? (
-          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-        ) : (
-          <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-        )}
+        {open ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" /> : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
       </button>
       {open && newValue != null && (
         <div className="px-3 pb-3 ml-[80px]">
           {typeof newValue === "object" ? (
             <div className="border border-border/50 rounded-md p-3 bg-muted/10">
               <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Changed Value</div>
-              <SchemaRenderer
-                schema={inferSchema(newValue)}
-                data={newValue}
-                readOnly
-              />
+              <SchemaRenderer schema={inferSchema(newValue)} data={newValue} readOnly />
             </div>
           ) : (
             <div className="border border-border/50 rounded-md p-3 bg-muted/10">
@@ -283,17 +156,12 @@ export default function StatePage() {
   const [expandedPlugins, setExpandedPlugins] = useState<Record<string, boolean>>({ net: true });
   const [localOverrides, setLocalOverrides] = useState<Record<string, Record<string, unknown>>>({});
 
-  const stateUpdates = useMemo(
-    () => events.filter((e) => e.event === "state_update"),
-    [events]
-  );
+  const stateUpdates = useMemo(() => events.filter((e) => e.event === "state_update"), [events]);
 
-  // Build plugin state: live store data → local overrides → defaults
+  // Build plugin state: live store data → local overrides (no defaults)
   const mergedPluginState = useMemo(() => {
     const merged: Record<string, Record<string, unknown>> = {};
     for (const plugin of PLUGIN_DEFS) {
-      const defaults = DEFAULT_STATE[plugin.id] ?? {};
-      // Pull live values: keys like "net.mtu", "net.ip_address", or "net:mtu"
       const live: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(latestState)) {
         const dotParts = key.split(".");
@@ -306,7 +174,7 @@ export default function StatePage() {
           Object.assign(live, value as Record<string, unknown>);
         }
       }
-      merged[plugin.id] = { ...defaults, ...live, ...(localOverrides[plugin.id] ?? {}) };
+      merged[plugin.id] = { ...live, ...(localOverrides[plugin.id] ?? {}) };
     }
     return merged;
   }, [latestState, localOverrides]);
@@ -316,24 +184,16 @@ export default function StatePage() {
   }, []);
 
   const handlePluginChange = useCallback((pluginId: string, updated: unknown) => {
-    setLocalOverrides((prev) => ({
-      ...prev,
-      [pluginId]: updated as Record<string, unknown>,
-    }));
-    // TODO: dispatch change to backend via API
-    console.log(`[state] dispatching tunable change for plugin: ${pluginId}`, updated);
+    setLocalOverrides((prev) => ({ ...prev, [pluginId]: updated as Record<string, unknown> }));
   }, []);
 
-  // Filter plugins + events by search
   const filteredPlugins = useMemo(() => {
     if (!search) return PLUGIN_DEFS;
     const q = search.toLowerCase();
     return PLUGIN_DEFS.filter((p) => {
       if (p.label.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)) return true;
       const data = mergedPluginState[p.id];
-      if (data) {
-        return Object.keys(data).some((k) => k.toLowerCase().includes(q));
-      }
+      if (data) return Object.keys(data).some((k) => k.toLowerCase().includes(q));
       return false;
     });
   }, [search, mergedPluginState]);
@@ -348,70 +208,36 @@ export default function StatePage() {
     });
   }, [stateUpdates, search]);
 
-  const activePlugins = PLUGIN_DEFS.length;
   const tunableCount = PLUGIN_DEFS.reduce((s, p) => s + p.mutableKeys.size, 0);
 
   return (
     <>
-      <PageHeader
-        title="Live State"
-        subtitle="Interactive state projections grouped by plugin. Tunables are editable; read-only values are displayed as badges."
-      />
+      <PageHeader title="Live State" subtitle="Interactive state projections grouped by plugin. Tunables are editable; read-only values are displayed as badges." />
 
-      {/* Search bar */}
       <div className="relative max-w-md">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          placeholder="Filter plugins, keys, and events…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-8 h-8 text-xs bg-[hsl(var(--bg-elevated))]"
-        />
+        <Input placeholder="Filter plugins, keys, and events…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-xs bg-[hsl(var(--bg-elevated))]" />
       </div>
 
-      {/* KPI strip */}
       <div className="flex gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <Activity className="h-3.5 w-3.5 text-primary" />
-          <span className="text-foreground font-medium">{activePlugins}</span> plugins
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="text-foreground font-medium">{tunableCount}</span> tunables
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5" />
-          <span className="text-foreground font-medium">{stateUpdates.length}</span> state changes
-        </span>
+        <span className="flex items-center gap-1.5"><Activity className="h-3.5 w-3.5 text-primary" /><span className="text-foreground font-medium">{PLUGIN_DEFS.length}</span> plugins</span>
+        <span className="flex items-center gap-1.5"><span className="text-foreground font-medium">{tunableCount}</span> tunables</span>
+        <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /><span className="text-foreground font-medium">{stateUpdates.length}</span> state changes</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 min-h-0">
-        {/* ── Left: Plugin-Grouped State ── */}
         <div className="space-y-2">
           {filteredPlugins.map((plugin) => (
-            <PluginCard
-              key={plugin.id}
-              plugin={plugin}
-              data={mergedPluginState[plugin.id] ?? {}}
-              expanded={!!expandedPlugins[plugin.id]}
-              onToggle={() => togglePlugin(plugin.id)}
-              onChange={(updated) => handlePluginChange(plugin.id, updated)}
-              searchMatch={true}
-            />
+            <PluginCard key={plugin.id} plugin={plugin} data={mergedPluginState[plugin.id] ?? {}} expanded={!!expandedPlugins[plugin.id]}
+              onToggle={() => togglePlugin(plugin.id)} onChange={(updated) => handlePluginChange(plugin.id, updated)} searchMatch={true} />
           ))}
-          {filteredPlugins.length === 0 && (
-            <div className="text-sm text-muted-foreground text-center py-8">
-              No plugins match "{search}"
-            </div>
-          )}
+          {filteredPlugins.length === 0 && <div className="text-sm text-muted-foreground text-center py-8">No plugins match "{search}"</div>}
         </div>
 
-        {/* ── Right: State Changes Tape ── */}
         <Card title="State Changes" subtitle="Click a row to expand the changed value.">
           <div className="mt-2 max-h-[calc(100vh-280px)] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
             {filteredEvents.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-6 text-center">
-                {search ? `No events match "${search}"` : "No state changes received yet."}
-              </div>
+              <div className="text-sm text-muted-foreground py-6 text-center">{search ? `No events match "${search}"` : "No state changes received yet."}</div>
             ) : (
               filteredEvents.map((evt) => <TapeRow key={evt.id} event={evt} />)
             )}

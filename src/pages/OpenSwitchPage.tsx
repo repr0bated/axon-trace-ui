@@ -15,21 +15,6 @@ interface OvsBridge {
   ports: { name: string; type: string; tag?: number; status: "up" | "down" }[];
 }
 
-const DEFAULT_BRIDGES: OvsBridge[] = [
-  { id: "br-1", name: "br-lan", datapath: "system", status: "active", ports: [
-    { name: "eth0", type: "internal", status: "up" },
-    { name: "veth-ct1", type: "veth", tag: 10, status: "up" },
-    { name: "veth-ct2", type: "veth", tag: 20, status: "up" },
-  ] },
-  { id: "br-2", name: "br-priv", datapath: "system", status: "active", ports: [
-    { name: "wg0", type: "internal", status: "up" },
-    { name: "tun0", type: "gre", status: "up" },
-  ] },
-  { id: "br-3", name: "br-mgmt", datapath: "system", status: "inactive", ports: [
-    { name: "eth1", type: "internal", status: "down" },
-  ] },
-];
-
 const bridgeSchema = {
   type: "object",
   properties: {
@@ -57,11 +42,9 @@ export default function OpenSwitchPage() {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
 
   const bridges = useMemo(() => {
-    return DEFAULT_BRIDGES.map((b) => {
-      const live = latestState[`ovs.${b.id}`] ?? latestState[`ovs:${b.id}`];
-      if (live && typeof live === "object") return { ...b, ...(live as Partial<OvsBridge>) };
-      return b;
-    });
+    const raw = latestState["ovs.bridges"] ?? latestState["ovs:bridges"] ?? latestState["ovs"];
+    if (Array.isArray(raw)) return raw as OvsBridge[];
+    return [] as OvsBridge[];
   }, [latestState]);
 
   return (
@@ -78,15 +61,20 @@ export default function OpenSwitchPage() {
       </div>
 
       <div className="space-y-4">
+        {bridges.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-12">
+            No OVS bridges detected. Waiting for live data…
+          </div>
+        )}
         {bridges.map((br) => (
-          <Card key={br.id} title={br.name} subtitle={`Datapath: ${br.datapath}`} actions={
+          <Card key={br.id ?? br.name} title={br.name} subtitle={`Datapath: ${br.datapath}`} actions={
             <div className="flex items-center gap-2">
               <StatusDot status={br.status === "active" ? "ok" : "offline"} />
               <Badge variant="outline" className="text-[10px] font-mono">{br.status}</Badge>
             </div>
           }>
             <div className="mt-3 space-y-2">
-              {br.ports.map((port) => (
+              {(br.ports ?? []).map((port) => (
                 <div key={port.name} className="flex items-center justify-between rounded-md border border-border px-3 py-2 bg-muted/10">
                   <div className="flex items-center gap-2">
                     <Cable className="h-3.5 w-3.5 text-muted-foreground" />

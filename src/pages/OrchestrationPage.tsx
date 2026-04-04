@@ -4,17 +4,10 @@
  */
 import { useState, useCallback, useMemo, useEffect } from "react";
 import {
-  ReactFlow,
-  Background,
-  Controls,
-  useNodesState,
-  useEdgesState,
-  type Node,
-  type Edge,
-  ReactFlowProvider,
-  Handle,
-  Position,
-  type NodeProps,
+  ReactFlow, Background, Controls,
+  useNodesState, useEdgesState,
+  type Node, type Edge, ReactFlowProvider,
+  Handle, Position, type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PageHeader, Card, StatusDot } from "@/components/shell/Primitives";
@@ -23,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SchemaRenderer } from "@/components/json/SchemaRenderer";
+import { useEventStore } from "@/stores/event-store";
 import { cn } from "@/lib/utils";
 import {
   Bot, Activity, ChevronRight, CheckCircle, XCircle, Clock, Play,
@@ -52,32 +46,9 @@ interface TaskResult {
   timestamp: number;
 }
 
-// ── Mock Data ───────────────────────────────────────────
-const MOCK_AGENTS: AgentInfo[] = [
-  { id: "agent-network", name: "Network Agent", status: "busy", activeTask: "Scanning ports on 100.64.0.0/24", model: "gpt-4", emoji: "🌐" },
-  { id: "agent-database", name: "Database Agent", status: "idle", activeTask: null, model: "claude-3", emoji: "🗄️" },
-  { id: "agent-openclaw", name: "OpenClaw Cognitive", status: "busy", activeTask: "Analyzing D-Bus service topology", model: "gpt-4", emoji: "🦀" },
-  { id: "agent-security", name: "Security Agent", status: "idle", activeTask: null, model: "llama-3", emoji: "🛡️" },
-  { id: "agent-monitor", name: "System Monitor", status: "error", activeTask: "Health check failed — retrying", model: "gpt-4", emoji: "📊" },
-  { id: "agent-tools", name: "Tool Executor", status: "offline", activeTask: null, model: "claude-3", emoji: "🔧" },
-];
-
-const MOCK_STRATEGY: Strategy = "pipeline";
-
-const MOCK_TASK_RESULTS: TaskResult[] = [
-  { id: "tr-1", taskId: "scan-001", agent: "Network Agent", success: true, durationMs: 1240, result: { hosts_found: 12, open_ports: [22, 80, 443, 8080] }, timestamp: Date.now() - 60000 },
-  { id: "tr-2", taskId: "analyze-002", agent: "OpenClaw Cognitive", success: true, durationMs: 3420, result: { services_analyzed: 48, anomalies: 2, topology_hash: "a3f8c2" }, timestamp: Date.now() - 45000 },
-  { id: "tr-3", taskId: "check-003", agent: "System Monitor", success: false, durationMs: 5001, result: { error: "timeout", message: "Health endpoint did not respond within 5s" }, timestamp: Date.now() - 30000 },
-  { id: "tr-4", taskId: "audit-004", agent: "Security Agent", success: true, durationMs: 890, result: { policies_checked: 24, violations: 0, risk_score: 0.12 }, timestamp: Date.now() - 15000 },
-  { id: "tr-5", taskId: "exec-005", agent: "Tool Executor", success: true, durationMs: 156, result: { tool: "dbus.list_services", service_count: 34 }, timestamp: Date.now() - 5000 },
-];
-
 // ── Agent Status Colors ──────────────────────────────────
 const statusVariant: Record<AgentStatus, "ok" | "warn" | "error" | "offline"> = {
-  idle: "ok",
-  busy: "warn",
-  error: "error",
-  offline: "offline",
+  idle: "ok", busy: "warn", error: "error", offline: "offline",
 };
 
 const statusBadge: Record<AgentStatus, string> = {
@@ -88,10 +59,7 @@ const statusBadge: Record<AgentStatus, string> = {
 };
 
 // ── Custom Node ──────────────────────────────────────────
-interface AgentNodeData {
-  agent: AgentInfo;
-  [key: string]: unknown;
-}
+interface AgentNodeData { agent: AgentInfo; [key: string]: unknown; }
 
 function AgentNode({ data }: NodeProps) {
   const d = data as unknown as AgentNodeData;
@@ -114,13 +82,9 @@ function AgentNode({ data }: NodeProps) {
         <StatusDot status={statusVariant[agent.status]} />
       </div>
       <div className="px-3 py-2">
-        <Badge variant="outline" className={cn("text-[9px]", statusBadge[agent.status])}>
-          {agent.status}
-        </Badge>
+        <Badge variant="outline" className={cn("text-[9px]", statusBadge[agent.status])}>{agent.status}</Badge>
         {agent.activeTask && (
-          <div className="mt-1.5 text-[10px] text-muted-foreground font-mono truncate max-w-[160px]">
-            {agent.activeTask}
-          </div>
+          <div className="mt-1.5 text-[10px] text-muted-foreground font-mono truncate max-w-[160px]">{agent.activeTask}</div>
         )}
       </div>
       {isBusy && (
@@ -141,189 +105,133 @@ function buildGraph(agents: AgentInfo[], strategy: Strategy): { nodes: Node[]; e
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  // Coordinator node
   nodes.push({
-    id: "coordinator",
-    type: "agentNode",
-    position: { x: 50, y: 150 },
+    id: "coordinator", type: "agentNode", position: { x: 50, y: 150 },
     data: {
-      agent: {
-        id: "coordinator",
-        name: "Coordinator",
-        status: "busy" as AgentStatus,
-        activeTask: `Strategy: ${strategy}`,
-        model: "orchestrator",
-        emoji: "🎯",
-      },
+      agent: { id: "coordinator", name: "Coordinator", status: "busy" as AgentStatus, activeTask: `Strategy: ${strategy}`, model: "orchestrator", emoji: "🎯" },
     } satisfies AgentNodeData as any,
   });
 
   if (strategy === "pipeline" || strategy === "sequential") {
-    // Linear chain
     busyAgents.forEach((agent, i) => {
-      const x = 320 + i * 260;
-      const y = 150;
-      nodes.push({
-        id: agent.id,
-        type: "agentNode",
-        position: { x, y },
-        data: { agent } satisfies AgentNodeData as any,
-      });
+      nodes.push({ id: agent.id, type: "agentNode", position: { x: 320 + i * 260, y: 150 }, data: { agent } satisfies AgentNodeData as any });
       const source = i === 0 ? "coordinator" : busyAgents[i - 1].id;
-      edges.push({
-        id: `e-${source}-${agent.id}`,
-        source,
-        target: agent.id,
-        animated: agent.status === "busy",
-        style: { stroke: agent.status === "busy" ? "hsl(var(--warn))" : "hsl(var(--border))", strokeWidth: 2 },
-      });
+      edges.push({ id: `e-${source}-${agent.id}`, source, target: agent.id, animated: agent.status === "busy", style: { stroke: agent.status === "busy" ? "hsl(var(--warn))" : "hsl(var(--border))", strokeWidth: 2 } });
     });
   } else {
-    // Parallel / Race — fan out from coordinator
     const spacing = 80;
     const totalHeight = (busyAgents.length - 1) * spacing;
     const startY = 150 - totalHeight / 2;
-
     busyAgents.forEach((agent, i) => {
-      nodes.push({
-        id: agent.id,
-        type: "agentNode",
-        position: { x: 350, y: startY + i * spacing },
-        data: { agent } satisfies AgentNodeData as any,
-      });
-      edges.push({
-        id: `e-coord-${agent.id}`,
-        source: "coordinator",
-        target: agent.id,
-        animated: agent.status === "busy",
-        style: { stroke: agent.status === "busy" ? "hsl(var(--warn))" : "hsl(var(--border))", strokeWidth: 2 },
-      });
+      nodes.push({ id: agent.id, type: "agentNode", position: { x: 350, y: startY + i * spacing }, data: { agent } satisfies AgentNodeData as any });
+      edges.push({ id: `e-coord-${agent.id}`, source: "coordinator", target: agent.id, animated: agent.status === "busy", style: { stroke: agent.status === "busy" ? "hsl(var(--warn))" : "hsl(var(--border))", strokeWidth: 2 } });
     });
   }
-
   return { nodes, edges };
 }
 
 // ── Main Page ────────────────────────────────────────────
 function OrchestrationInner() {
-  const [strategy, setStrategy] = useState<Strategy>(MOCK_STRATEGY);
-  const graph = useMemo(() => buildGraph(MOCK_AGENTS, strategy), [strategy]);
+  const { latestState } = useEventStore();
+
+  const agents = useMemo(() => {
+    const raw = latestState["orchestration.agents"] ?? latestState["orchestration:agents"] ?? latestState["agents.pool"];
+    if (Array.isArray(raw)) return raw as AgentInfo[];
+    return [] as AgentInfo[];
+  }, [latestState]);
+
+  const taskResults = useMemo(() => {
+    const raw = latestState["orchestration.tasks"] ?? latestState["orchestration:task_results"] ?? latestState["task_results"];
+    if (Array.isArray(raw)) return raw as TaskResult[];
+    return [] as TaskResult[];
+  }, [latestState]);
+
+  const liveStrategy = latestState["orchestration.strategy"] ?? latestState["orchestration:strategy"];
+  const [strategy, setStrategy] = useState<Strategy>((liveStrategy as Strategy) ?? "pipeline");
+
+  useEffect(() => {
+    if (liveStrategy && typeof liveStrategy === "string") setStrategy(liveStrategy as Strategy);
+  }, [liveStrategy]);
+
+  const graph = useMemo(() => buildGraph(agents, strategy), [agents, strategy]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Rebuild graph when strategy changes
   useEffect(() => {
-    const g = buildGraph(MOCK_AGENTS, strategy);
+    const g = buildGraph(agents, strategy);
     setNodes(g.nodes);
     setEdges(g.edges);
-  }, [strategy, setNodes, setEdges]);
+  }, [agents, strategy, setNodes, setEdges]);
 
   const toggleRow = (id: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setExpandedRows((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
 
   const strategies: Strategy[] = ["pipeline", "parallel", "race_first_success", "sequential"];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Orchestration"
-        subtitle="Multi-agent execution monitoring and coordination control."
+      <PageHeader title="Orchestration" subtitle="Multi-agent execution monitoring and coordination control."
         actions={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-md border border-border bg-secondary p-0.5">
               {strategies.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStrategy(s)}
-                  className={cn(
-                    "px-2 py-1 text-[10px] font-mono rounded transition-colors",
-                    strategy === s ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
+                <button key={s} onClick={() => setStrategy(s)}
+                  className={cn("px-2 py-1 text-[10px] font-mono rounded transition-colors", strategy === s ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:text-foreground")}>
                   {s.replace("_", " ")}
                 </button>
               ))}
             </div>
-            <Button size="sm" className="h-7 text-xs gap-1.5">
-              <Play className="h-3 w-3" />Execute
-            </Button>
+            <Button size="sm" className="h-7 text-xs gap-1.5"><Play className="h-3 w-3" />Execute</Button>
           </div>
         }
       />
 
-      {/* ── Agent Pool ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {MOCK_AGENTS.map((agent) => (
-          <Card key={agent.id} className="!p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{agent.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-foreground truncate">{agent.name}</div>
-                <div className="text-[10px] text-muted-foreground font-mono">{agent.model}</div>
+      {/* Agent Pool */}
+      {agents.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No agents detected. Waiting for live data…</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {agents.map((agent) => (
+            <Card key={agent.id} className="!p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">{agent.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-foreground truncate">{agent.name}</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">{agent.model}</div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusDot status={statusVariant[agent.status]} />
-              <Badge variant="outline" className={cn("text-[9px]", statusBadge[agent.status])}>
-                {agent.status}
-              </Badge>
-            </div>
-            {agent.activeTask && (
-              <div className="mt-2 text-[10px] text-muted-foreground font-mono line-clamp-2">
-                {agent.activeTask}
+              <div className="flex items-center gap-2">
+                <StatusDot status={statusVariant[agent.status]} />
+                <Badge variant="outline" className={cn("text-[9px]", statusBadge[agent.status])}>{agent.status}</Badge>
               </div>
-            )}
-          </Card>
-        ))}
-      </div>
+              {agent.activeTask && <div className="mt-2 text-[10px] text-muted-foreground font-mono line-clamp-2">{agent.activeTask}</div>}
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* ── Live Execution Graph ───────────────────────── */}
+      {/* Execution Graph */}
       <Card title="Execution Graph" subtitle={`Active strategy: ${strategy.replace("_", " ")}`}
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px]">
-              <Network className="h-3 w-3 mr-1" />
-              {nodes.length} nodes
-            </Badge>
-            <Button size="sm" variant="ghost" className="h-6 text-xs gap-1">
-              <RotateCcw className="h-3 w-3" />Reset
-            </Button>
+            <Badge variant="outline" className="text-[10px]"><Network className="h-3 w-3 mr-1" />{nodes.length} nodes</Badge>
+            <Button size="sm" variant="ghost" className="h-6 text-xs gap-1"><RotateCcw className="h-3 w-3" />Reset</Button>
           </div>
         }
       >
         <div className="h-[320px] rounded-lg border border-border overflow-hidden mt-2 bg-background">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            nodeTypes={nodeTypes}
-            fitView
-            className="[&_.react-flow__background]:!bg-background"
-            proOptions={{ hideAttribution: true }}
-          >
+          <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} nodeTypes={nodeTypes} fitView className="[&_.react-flow__background]:!bg-background" proOptions={{ hideAttribution: true }}>
             <Background gap={20} size={1} color="hsl(var(--border))" />
             <Controls className="[&_button]:!bg-card [&_button]:!border-border [&_button]:!text-foreground [&_button:hover]:!bg-muted" />
           </ReactFlow>
         </div>
       </Card>
 
-      {/* ── Task Ledger ────────────────────────────────── */}
-      <Card
-        title="Task Ledger"
-        subtitle="Live feed of TaskResult events from the orchestrator."
-        actions={
-          <Badge variant="outline" className="text-[10px]">
-            {MOCK_TASK_RESULTS.length} results
-          </Badge>
-        }
-      >
+      {/* Task Ledger */}
+      <Card title="Task Ledger" subtitle="Live feed of TaskResult events from the orchestrator."
+        actions={<Badge variant="outline" className="text-[10px]">{taskResults.length} results</Badge>}>
         <div className="mt-2 rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
@@ -337,46 +245,32 @@ function OrchestrationInner() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_TASK_RESULTS.map((tr) => {
+              {taskResults.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-6">No task results yet.</TableCell></TableRow>
+              )}
+              {taskResults.map((tr) => {
                 const isExpanded = expandedRows.has(tr.id);
                 return (
                   <Collapsible key={tr.id} asChild open={isExpanded} onOpenChange={() => toggleRow(tr.id)}>
                     <>
                       <CollapsibleTrigger asChild>
                         <TableRow className="cursor-pointer group">
-                          <TableCell className="py-2 w-8">
-                            <ChevronRight className={cn(
-                              "h-3 w-3 text-muted-foreground transition-transform",
-                              isExpanded && "rotate-90",
-                            )} />
-                          </TableCell>
+                          <TableCell className="py-2 w-8"><ChevronRight className={cn("h-3 w-3 text-muted-foreground transition-transform", isExpanded && "rotate-90")} /></TableCell>
                           <TableCell className="py-2 font-mono text-xs text-foreground">{tr.taskId}</TableCell>
                           <TableCell className="py-2 text-xs text-muted-foreground">{tr.agent}</TableCell>
                           <TableCell className="py-2">
-                            {tr.success ? (
-                              <span className="flex items-center gap-1 text-ok text-xs"><CheckCircle className="h-3 w-3" />Success</span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-danger text-xs"><XCircle className="h-3 w-3" />Failed</span>
-                            )}
+                            {tr.success ? <span className="flex items-center gap-1 text-ok text-xs"><CheckCircle className="h-3 w-3" />Success</span> : <span className="flex items-center gap-1 text-danger text-xs"><XCircle className="h-3 w-3" />Failed</span>}
                           </TableCell>
                           <TableCell className="py-2 text-right font-mono text-xs text-muted-foreground">{tr.durationMs}ms</TableCell>
-                          <TableCell className="py-2 text-right font-mono text-[11px] text-muted-foreground">
-                            {new Date(tr.timestamp).toLocaleTimeString()}
-                          </TableCell>
+                          <TableCell className="py-2 text-right font-mono text-[11px] text-muted-foreground">{new Date(tr.timestamp).toLocaleTimeString()}</TableCell>
                         </TableRow>
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
-                        <tr>
-                          <td colSpan={6} className="p-0">
-                            <div className="px-4 py-3 bg-muted/10 border-t border-border/30">
-                              <SchemaRenderer
-                                schema={inferResultSchema(tr.result)}
-                                data={tr.result}
-                                readOnly
-                              />
-                            </div>
-                          </td>
-                        </tr>
+                        <tr><td colSpan={6} className="p-0">
+                          <div className="px-4 py-3 bg-muted/10 border-t border-border/30">
+                            <SchemaRenderer schema={inferResultSchema(tr.result)} data={tr.result} readOnly />
+                          </div>
+                        </td></tr>
                       </CollapsibleContent>
                     </>
                   </Collapsible>
@@ -398,18 +292,12 @@ function inferResultSchema(data: unknown): any {
   if (Array.isArray(data)) return { type: "array", items: data.length > 0 ? inferResultSchema(data[0]) : { type: "string" } };
   if (typeof data === "object") {
     const props: Record<string, any> = {};
-    for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-      props[k] = inferResultSchema(v);
-    }
+    for (const [k, v] of Object.entries(data as Record<string, unknown>)) props[k] = inferResultSchema(v);
     return { type: "object", properties: props };
   }
   return { type: "string" };
 }
 
 export default function OrchestrationPage() {
-  return (
-    <ReactFlowProvider>
-      <OrchestrationInner />
-    </ReactFlowProvider>
-  );
+  return <ReactFlowProvider><OrchestrationInner /></ReactFlowProvider>;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader, Card, Pill } from "@/components/shell/Primitives";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SchemaRenderer } from "@/components/json/SchemaRenderer";
@@ -11,70 +11,49 @@ import type { LogLevel, JsonSchema } from "@/types/api";
 
 const LEVELS: LogLevel[] = ["trace", "debug", "info", "warn", "error", "fatal"];
 
-const MOCK_LOGS = Array.from({ length: 30 }, (_, i) => ({
-  id: `log-${i}`,
-  time: new Date(Date.now() - (30 - i) * 2000).toISOString(),
-  level: (["info", "info", "debug", "warn", "info", "error", "info", "debug", "info", "info"][i % 10]) as LogLevel,
-  subsystem: ["gateway", "dbus", "agent", "tools", "auth"][i % 5],
-  message: [
-    "Service org.freedesktop.systemd1 registered",
-    "Agent main heartbeat OK",
-    "Tool dbus.list_services executed in 12ms",
-    "Session default active, 3 messages",
-    "WireGuard tunnel re-established",
-    "Permission denied for org.freedesktop.PolicyKit1",
-    "Config reload triggered",
-    "Introspect cache miss for /org/freedesktop/systemd1",
-    "SSE client connected from 100.64.0.2",
-    "Health check passed",
-  ][i % 10],
-  raw: `{"level":"info","ts":"${new Date().toISOString()}","msg":"log entry ${i}"}`,
-  metadata: i % 5 === 3 ? {
-    schema: {
-      type: "object",
-      title: "Tool Execution Details",
-      properties: {
-        tool_name: { type: "string", description: "Tool that was executed" },
-        duration_ms: { type: "number", minimum: 0, maximum: 5000, description: "Execution time" },
-        cache_hit: { type: "boolean", description: "Whether result was cached" },
-        bus: { type: "string", enum: ["system", "session"], description: "D-Bus bus type" },
-      },
-    } as JsonSchema,
-    payload: { tool_name: "dbus.list_services", duration_ms: 12, cache_hit: false, bus: "system" },
-  } : i % 5 === 5 - 1 ? {
-    actions: [
-      { label: "Retry Auth", action: "retry_auth", variant: "default" as const },
-      { label: "View Policy", action: "view_policy", variant: "outline" as const },
-    ],
-    payload: { service: "org.freedesktop.PolicyKit1", error_code: "EPERM", user: "operator" },
-  } : i % 7 === 0 ? {
-    schema: {
-      type: "object",
-      title: "Connection Details",
-      properties: {
-        remote_ip: { type: "string", description: "Remote IP address" },
-        tunnel: { type: "string", enum: ["wireguard", "direct", "proxy"], description: "Connection type" },
-        latency_ms: { type: "number", minimum: 0, maximum: 500, description: "Latency" },
-        authenticated: { type: "boolean", description: "Auth status" },
-      },
-    } as JsonSchema,
-    payload: { remote_ip: "100.64.0.2", tunnel: "wireguard", latency_ms: 3.2, authenticated: true },
-  } : undefined,
-}));
+interface LogEntry {
+  id: string;
+  time: string;
+  level: LogLevel;
+  subsystem: string;
+  message: string;
+  raw: string;
+  metadata?: {
+    schema?: JsonSchema;
+    payload?: Record<string, unknown>;
+    actions?: Array<{ label: string; action: string; variant?: "default" | "outline" | "destructive" }>;
+  };
+}
 
 export default function LogsPage() {
+  const { latestState, logs } = useEventStore();
   const [filterText, setFilterText] = useState("");
   const [levelFilters, setLevelFilters] = useState<Record<LogLevel, boolean>>(
     Object.fromEntries(LEVELS.map((l) => [l, true])) as Record<LogLevel, boolean>
   );
   const [autoFollow, setAutoFollow] = useState(true);
 
+  const logEntries = useMemo(() => {
+    const raw = latestState["logs"] ?? latestState["logs.entries"] ?? latestState["logs:entries"];
+    if (Array.isArray(raw)) return raw as LogEntry[];
+    // Fall back to event store logs
+    return logs.map((l, i) => ({
+      id: `log-${i}`,
+      time: (l as any).timestamp ?? new Date().toISOString(),
+      level: ((l as any).level ?? "info") as LogLevel,
+      subsystem: (l as any).source ?? (l as any).subsystem ?? "",
+      message: (l as any).message ?? String(l),
+      raw: JSON.stringify(l),
+      metadata: (l as any).metadata,
+    })) as LogEntry[];
+  }, [latestState, logs]);
+
   const toggleLevel = (level: LogLevel) => {
     setLevelFilters((prev) => ({ ...prev, [level]: !prev[level] }));
   };
 
   const needle = filterText.trim().toLowerCase();
-  const filtered = MOCK_LOGS.filter((entry) => {
+  const filtered = logEntries.filter((entry) => {
     if (!levelFilters[entry.level]) return false;
     if (!needle) return true;
     return [entry.message, entry.subsystem, entry.raw].join(" ").toLowerCase().includes(needle);
@@ -124,7 +103,7 @@ export default function LogsPage() {
         </div>
         <div className="mt-4 rounded-lg border border-border overflow-hidden max-h-[500px] overflow-y-auto bg-background" style={{ scrollbarWidth: "thin" }}>
           {filtered.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">No log entries.</div>
+            <div className="p-4 text-sm text-muted-foreground">{logEntries.length === 0 ? "No log entries. Waiting for live data…" : "No log entries match filters."}</div>
           ) : filtered.map((entry) => (
             <LogRow key={entry.id} entry={entry} levelColor={levelColor} />
           ))}
@@ -132,20 +111,6 @@ export default function LogsPage() {
       </Card>
     </>
   );
-}
-
-interface LogEntry {
-  id: string;
-  time: string;
-  level: LogLevel;
-  subsystem: string;
-  message: string;
-  raw: string;
-  metadata?: {
-    schema?: JsonSchema;
-    payload?: Record<string, unknown>;
-    actions?: Array<{ label: string; action: string; variant?: "default" | "outline" | "destructive" }>;
-  };
 }
 
 function LogRow({ entry, levelColor }: { entry: LogEntry; levelColor: (l: LogLevel) => string }) {
@@ -178,22 +143,15 @@ function LogRow({ entry, levelColor }: { entry: LogEntry; levelColor: (l: LogLev
       <CollapsibleContent>
         <div className="px-4 pb-3 pt-1 ml-6 border-l-2 border-primary/20 space-y-3">
           {entry.metadata?.schema && entry.metadata.payload && (
-            <SchemaRenderer
-              schema={entry.metadata.schema}
-              data={entry.metadata.payload}
-              readOnly
-            />
+            <SchemaRenderer schema={entry.metadata.schema} data={entry.metadata.payload} readOnly />
           )}
           {entry.metadata?.actions && (
             <div className="flex items-center gap-2">
               {entry.metadata.actions.map((act) => (
-                <Button
-                  key={act.action}
-                  size="sm"
+                <Button key={act.action} size="sm"
                   variant={act.variant === "destructive" ? "destructive" : act.variant === "outline" ? "outline" : "default"}
                   className="h-7 text-xs gap-1.5"
-                  onClick={(e) => { e.stopPropagation(); console.log("Action:", act.action, entry.metadata?.payload); }}
-                >
+                  onClick={(e) => { e.stopPropagation(); console.log("Action:", act.action, entry.metadata?.payload); }}>
                   {act.label}
                 </Button>
               ))}

@@ -27,31 +27,6 @@ interface DbusMethod {
 
 const DBUS_SIG_LABELS: Record<string, string> = { s: "string", b: "boolean", i: "int32", u: "uint32", d: "double", a: "array", o: "object_path" };
 
-const DEFAULT_TREE: DbusObject[] = [
-  { path: "/org/freedesktop/NetworkManager", interfaces: [
-    { name: "org.freedesktop.NetworkManager", methods: [
-      { name: "GetDevices", args: [{ name: "devices", type: "ao", direction: "out" }] },
-      { name: "ActivateConnection", args: [{ name: "connection", type: "o", direction: "in" }, { name: "device", type: "o", direction: "in" }, { name: "specific_object", type: "o", direction: "in" }, { name: "active_connection", type: "o", direction: "out" }] },
-      { name: "Enable", args: [{ name: "enable", type: "b", direction: "in" }] },
-    ], properties: { State: { type: "u", access: "read", value: 70 }, Connectivity: { type: "u", access: "read", value: 4 }, WirelessEnabled: { type: "b", access: "readwrite", value: true }, Version: { type: "s", access: "read", value: "1.44.2" } }, signals: ["StateChanged", "DeviceAdded"] },
-  ] },
-  { path: "/org/freedesktop/systemd1", interfaces: [
-    { name: "org.freedesktop.systemd1.Manager", methods: [
-      { name: "StartUnit", args: [{ name: "name", type: "s", direction: "in" }, { name: "mode", type: "s", direction: "in" }, { name: "job", type: "o", direction: "out" }] },
-      { name: "StopUnit", args: [{ name: "name", type: "s", direction: "in" }, { name: "mode", type: "s", direction: "in" }, { name: "job", type: "o", direction: "out" }] },
-      { name: "RestartUnit", args: [{ name: "name", type: "s", direction: "in" }, { name: "mode", type: "s", direction: "in" }, { name: "job", type: "o", direction: "out" }] },
-      { name: "ListUnits", args: [{ name: "units", type: "a(ssssssouso)", direction: "out" }] },
-    ], properties: { Version: { type: "s", access: "read", value: "255.4" }, Architecture: { type: "s", access: "read", value: "x86-64" }, Virtualization: { type: "s", access: "read", value: "container" } }, signals: ["UnitNew", "UnitRemoved", "JobNew"] },
-  ] },
-  { path: "/org/freedesktop/login1", interfaces: [
-    { name: "org.freedesktop.login1.Manager", methods: [
-      { name: "ListSessions", args: [{ name: "sessions", type: "a(susso)", direction: "out" }] },
-      { name: "PowerOff", args: [{ name: "interactive", type: "b", direction: "in" }] },
-      { name: "Reboot", args: [{ name: "interactive", type: "b", direction: "in" }] },
-    ], properties: { Docked: { type: "b", access: "read", value: false }, IdleHint: { type: "b", access: "read", value: false }, NAutoVTs: { type: "u", access: "read", value: 6 } }, signals: ["SessionNew", "SessionRemoved"] },
-  ] },
-];
-
 function methodSchema(method: DbusMethod): Record<string, unknown> {
   const inArgs = method.args.filter((a) => a.direction === "in");
   const props: Record<string, unknown> = {};
@@ -84,12 +59,12 @@ export default function InspectorPage() {
   const [selectedIface, setSelectedIface] = useState<string | null>(null);
   const [methodArgs, setMethodArgs] = useState<Record<string, Record<string, unknown>>>({});
   const [callResults, setCallResults] = useState<Record<string, unknown>>({});
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set([DEFAULT_TREE[0]?.path]));
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
   const tree = useMemo(() => {
-    const live = latestState["dbus.tree"] ?? latestState["inspector:tree"];
+    const live = latestState["dbus.tree"] ?? latestState["inspector:tree"] ?? latestState["dbus:tree"];
     if (Array.isArray(live)) return live as DbusObject[];
-    return DEFAULT_TREE;
+    return [] as DbusObject[];
   }, [latestState]);
 
   const selectedObj = tree.find((o) => o.path === selectedPath);
@@ -120,6 +95,9 @@ export default function InspectorPage() {
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-0.5">
+              {tree.length === 0 && (
+                <div className="text-xs text-muted-foreground text-center py-8">No D-Bus objects. Waiting for live data…</div>
+              )}
               {tree.map((obj) => (
                 <div key={obj.path}>
                   <button
@@ -166,7 +144,6 @@ export default function InspectorPage() {
                   <span className="text-xs text-muted-foreground">{selectedPath}</span>
                 </div>
 
-                {/* Properties */}
                 {Object.keys(activeIface.properties).length > 0 && (() => {
                   const { schema, data } = propertySchema(activeIface.properties);
                   return (
@@ -177,7 +154,6 @@ export default function InspectorPage() {
                   );
                 })()}
 
-                {/* Methods */}
                 {activeIface.methods.length > 0 && (
                   <div>
                     <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Methods</h4>
@@ -222,7 +198,6 @@ export default function InspectorPage() {
                   </div>
                 )}
 
-                {/* Signals */}
                 {activeIface.signals.length > 0 && (
                   <div>
                     <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Signals</h4>
@@ -236,7 +211,9 @@ export default function InspectorPage() {
               </div>
             </ScrollArea>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Select an object from the tree</div>
+            <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+              {tree.length === 0 ? "Waiting for D-Bus data…" : "Select an object from the tree"}
+            </div>
           )}
         </div>
       </div>

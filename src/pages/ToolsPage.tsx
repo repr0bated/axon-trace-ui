@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { PageHeader, Card, Callout, Pill } from "@/components/shell/Primitives";
+import { useState, useMemo } from "react";
+import { PageHeader, Card, Pill } from "@/components/shell/Primitives";
 import { SchemaPanel } from "@/components/json/SchemaPanel";
 import { JsonRenderer } from "@/components/json/JsonRenderer";
-import type { Tool, JsonSchema } from "@/types/api";
-
-const MOCK_TOOLS: Tool[] = [
-  { id: "dbus.list_services", name: "dbus.list_services", description: "List all D-Bus services on system and session buses.", inputSchema: { type: "object", properties: { bus: { type: "string", enum: ["system", "session"], description: "Which bus to query" } }, required: ["bus"] }, category: "dbus", enabled: true, source: "builtin" },
-  { id: "dbus.introspect", name: "dbus.introspect", description: "Introspect a D-Bus service to discover interfaces, methods, signals.", inputSchema: { type: "object", properties: { service: { type: "string", description: "Service name" }, path: { type: "string", default: "/", description: "Object path" } }, required: ["service"] }, category: "dbus", enabled: true, source: "builtin" },
-  { id: "dbus.call_method", name: "dbus.call_method", description: "Call a method on a D-Bus interface.", inputSchema: { type: "object", properties: { service: { type: "string" }, path: { type: "string" }, interface: { type: "string" }, method: { type: "string" }, args: { type: "array", items: { type: "string" } } }, required: ["service", "path", "interface", "method"] }, category: "dbus", enabled: true, source: "builtin" },
-  { id: "system.exec", name: "system.exec", description: "Execute a system command with approval.", inputSchema: { type: "object", properties: { command: { type: "string" }, timeout: { type: "number", default: 30 } }, required: ["command"] }, category: "system", enabled: true, source: "builtin" },
-  { id: "mcp.query", name: "mcp.query", description: "Query an MCP-connected service.", inputSchema: { type: "object", properties: { server: { type: "string" }, method: { type: "string" }, params: { type: "object" } }, required: ["server", "method"] }, category: "mcp", enabled: false, source: "mcp" },
-];
+import { useEventStore } from "@/stores/event-store";
+import type { Tool } from "@/types/api";
 
 export default function ToolsPage() {
+  const { latestState } = useEventStore();
   const [filter, setFilter] = useState("");
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [execResult, setExecResult] = useState<unknown>(null);
   const [execArgs, setExecArgs] = useState("{}");
 
-  const filtered = MOCK_TOOLS.filter((t) =>
+  const tools = useMemo(() => {
+    const raw = latestState["tools"] ?? latestState["tools.list"] ?? latestState["tools:catalog"];
+    if (Array.isArray(raw)) return raw as Tool[];
+    return [] as Tool[];
+  }, [latestState]);
+
+  const filtered = tools.filter((t) =>
     [t.name, t.description, t.category].join(" ").toLowerCase().includes(filter.toLowerCase())
   );
 
@@ -45,6 +45,7 @@ export default function ToolsPage() {
           <div className="text-xs text-muted-foreground mt-2">{filtered.length} shown</div>
         </div>
         <div className="mt-4 space-y-2">
+          {tools.length === 0 && <div className="text-sm text-muted-foreground text-center py-8">No tools detected. Waiting for live data…</div>}
           {filtered.map((tool) => (
             <button key={tool.id} onClick={() => { setSelectedTool(tool); setExecResult(null); setExecArgs("{}"); }}
               className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedTool?.id === tool.id ? "border-primary/30 bg-primary/5" : "border-border hover:border-muted-foreground/20"}`}>
