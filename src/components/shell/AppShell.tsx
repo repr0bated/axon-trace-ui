@@ -20,6 +20,7 @@ const NAV_GROUPS = [
     label: "Control",
     items: [
       { title: "Overview", path: "/", icon: BarChart3 },
+      { title: "Orchestration", path: "/orchestration", icon: Orbit },
       { title: "Services", path: "/services", icon: Link2 },
       { title: "Sessions", path: "/sessions", icon: FileText },
       { title: "LLM", path: "/llm", icon: Radio },
