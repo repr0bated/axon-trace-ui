@@ -25,8 +25,19 @@ function formatUptime(ms: number): string {
   return `${m}m ${s % 60}s`;
 }
 
+interface ConnectedPeer {
+  id: string;
+  client_id: string;
+  type: string;
+  protocol: string;
+  connected_at: string;
+  active_streams: number;
+  state?: Record<string, unknown>;
+}
+
 export default function OverviewPage() {
   const { connected, health, events, eventCounts, latestState, latestStats, lastError } = useEventStore();
+  const [expandedPeers, setExpandedPeers] = useState<Set<string>>(new Set());
 
   // Derive resource values from health or stats
   const cpu = health?.cpuPercent ?? (latestStats?.cpu as number | undefined) ?? 0;
