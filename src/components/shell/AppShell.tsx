@@ -54,6 +54,7 @@ const NAV_GROUPS = [
       { title: "Inspector", path: "/inspector", icon: Bug },
       { title: "State", path: "/state", icon: Monitor },
       { title: "Logs", path: "/logs", icon: ScrollText },
+      { title: "gRPC Diagnostics", path: "/grpc", icon: Radio },
     ],
   },
 ];
