@@ -1,14 +1,25 @@
 /**
  * Typed API client for the operation-dbus gateway.
- * Same-origin by default, configurable via env.
+ * Unary RPCs use gRPC-Web; streaming is handled by use-event-stream.
+ * Falls back to REST for endpoints not yet ported to gRPC.
  */
+import {
+  stateSync,
+  pluginService,
+  ovsdbMirror,
+  runtimeMirror,
+  eventChainService,
+  componentRegistry,
+} from "@/grpc/client";
+import { structToObject } from "@/grpc/google/protobuf/struct";
 import type {
   HealthSnapshot, StatusSummary, DbusService, Tool, Agent, Session,
-  ChatMessage, LogEntry, ConfigSnapshot, LlmProvider, LlmModel, EventLogEntry,
+  ChatMessage, LogEntry, ConfigSnapshot, LlmProvider, LlmModel,
 } from "@/types/api";
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
+/** REST fallback for endpoints not yet gRPC-ified */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -19,6 +30,59 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // ── gRPC-powered endpoints ──────────────────────────────────────────────
+
+  /** Get full state snapshot via gRPC StateSync.GetState */
+  state: async (pluginId = "", objectPath = "") => {
+    const resp = await stateSync.getState({ pluginId, objectPath });
+    return structToObject(resp.state);
+  },
+
+  /** Mutate state via gRPC StateSync.Mutate */
+  mutate: stateSync.mutate,
+  batchMutate: stateSync.batchMutate,
+
+  /** Plugin operations via gRPC PluginService */
+  plugins: {
+    list: async () => {
+      const resp = await pluginService.listPlugins();
+      return resp.plugins;
+    },
+    getSchema: pluginService.getSchema,
+    callMethod: pluginService.callMethod,
+  },
+
+  /** Event chain / audit via gRPC EventChainService */
+  eventChain: {
+    getEvents: eventChainService.getEvents,
+    verifyChain: eventChainService.verifyChain,
+  },
+
+  /** OVSDB via gRPC OvsdbMirror */
+  ovs: {
+    listDbs: ovsdbMirror.listDbs,
+    getSchema: ovsdbMirror.getSchema,
+    transact: ovsdbMirror.transact,
+    getBridgeState: ovsdbMirror.getBridgeState,
+  },
+
+  /** Runtime via gRPC RuntimeMirror */
+  runtime: {
+    getSystemInfo: runtimeMirror.getSystemInfo,
+    listServices: runtimeMirror.listServices,
+    getService: runtimeMirror.getService,
+    listInterfaces: runtimeMirror.listInterfaces,
+    getNumaTopology: runtimeMirror.getNumaTopology,
+  },
+
+  /** Component registry via gRPC */
+  registry: {
+    discover: componentRegistry.discover,
+    getComponent: componentRegistry.getComponent,
+  },
+
+  // ── REST fallbacks (not yet ported to gRPC) ─────────────────────────────
+
   health: () => request<HealthSnapshot>("/health"),
   status: () => request<StatusSummary>("/status"),
 
@@ -92,8 +156,6 @@ export const api = {
     apply: () => request<void>("/config/apply", { method: "POST" }),
   },
 
-  state: () => request<Record<string, unknown>>("/state"),
-
   debug: {
     call: (method: string, params: unknown) =>
       request<unknown>("/debug/call", {
@@ -102,19 +164,14 @@ export const api = {
   },
 };
 
-/** Connect to SSE event stream */
+/**
+ * @deprecated Use `useEventStream()` hook instead — SSE has been replaced by gRPC-Web streams.
+ */
 export function connectEventStream(
   onEvent: (event: { type: string; data: unknown }) => void,
   onError: (err: Error) => void,
 ): () => void {
-  const url = `${BASE}/events`;
-  const es = new EventSource(url);
-  es.onmessage = (e) => {
-    try {
-      const parsed = JSON.parse(e.data);
-      onEvent(parsed);
-    } catch { /* ignore parse errors */ }
-  };
-  es.onerror = () => onError(new Error("SSE connection lost"));
-  return () => es.close();
+  console.warn("[DEPRECATED] connectEventStream: SSE has been replaced by gRPC-Web. Use useEventStream() hook.");
+  // No-op — streams are now managed by useEventStream
+  return () => {};
 }
