@@ -175,7 +175,7 @@ export default function AgentsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-bold text-foreground truncate">{agent.name}</h3>
-                  <Pill variant={STATUS_MAP[agent.status]}>{agent.status}</Pill>
+                  <Pill variant={STATUS_PILL[agent.status]}>{agent.status}</Pill>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{agent.description}</p>
 
