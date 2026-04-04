@@ -45,6 +45,7 @@ function AppInner() {
         <Route path="/logs" element={<LogsPage />} />
         <Route path="/workflows" element={<WorkflowsPage />} />
         <Route path="/orchestration" element={<OrchestrationPage />} />
+        <Route path="/skills" element={<SkillsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppShell>
