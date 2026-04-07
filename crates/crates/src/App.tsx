@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/inspector" element={<InspectorPage />} />
             <Route path="/state" element={<StatePage />} />
             <Route path="/claw/search" element={<KnowledgeStorePage />} />
+            <Route path="/accountability" element={<AccountabilityPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppShell>
