@@ -280,7 +280,44 @@ import type {
   GetEpisodeRequest, GetEpisodeResponse,
   CollectionStatsResponse,
   ChatWithContextRequest, ChatWithContextResponse,
+  SubscribeEpisodesRequest, EpisodeEvent,
+  GetPiiPolicyResponse,
 } from "./types/accountability";
+
+import type {
+  GetFootprintsRequest, GetFootprintsResponse,
+  VerifyBlockchainRequest, VerifyBlockchainResponse,
+  GetEmbeddingQueueStatusResponse,
+  GetQdrantRolesResponse,
+} from "./types/blockchain";
+
+import type {
+  GetSubvolumesResponse,
+  GetSnapshotsRequest as BtrfsGetSnapshotsRequest, GetSnapshotsResponse as BtrfsGetSnapshotsResponse,
+  GetSendStateResponse,
+  GetDrStatusResponse,
+} from "./types/btrfs";
+
+import type {
+  ListPersonasResponse,
+  GetPersonaRequest, GetPersonaResponse,
+  CreatePersonaRequest, CreatePersonaResponse,
+  UpdatePersonaRequest, UpdatePersonaResponse,
+  DeletePersonaRequest, DeletePersonaResponse,
+  ListAgentRoutesResponse,
+} from "./types/persona";
+
+import type {
+  GetDataStoresResponse,
+  GetStoreDetailRequest, GetStoreDetailResponse,
+} from "./types/data-stores";
+
+import type {
+  GetEmbeddingQueueRequest, GetEmbeddingQueueResponse,
+  GetEmbeddingWorkerStatusResponse,
+  PreviewEmbeddingTextRequest, PreviewEmbeddingTextResponse,
+  GetChannelDiagnosticsResponse,
+} from "./types/embedding";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BRIDGE SERVICES (op-grpc-bridge)
