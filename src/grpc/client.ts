@@ -907,4 +907,174 @@ export const accountabilityService = {
       "operation.accountability.v1.ChatbotAccountabilityService", "ChatWithContext", req,
     );
   },
+
+  subscribeEpisodes(req: Partial<SubscribeEpisodesRequest> = {}) {
+    return grpcServerStream<SubscribeEpisodesRequest, EpisodeEvent>(
+      "operation.accountability.v1.ChatbotAccountabilityService", "SubscribeEpisodes", {
+        pluginId: req.pluginId ?? "",
+        outcomeClassFilter: req.outcomeClassFilter ?? "",
+        includeExisting: req.includeExisting ?? false,
+      },
+    );
+  },
+
+  getPiiPolicy() {
+    return grpcUnary<Record<string, never>, GetPiiPolicyResponse>(
+      "operation.accountability.v1.ChatbotAccountabilityService", "GetPiiPolicy", {},
+    );
+  },
+};
+
+// ── BlockchainService (operation.blockchain.v1) ─────────────────────────────
+
+export const blockchainService = {
+  getFootprints(req: Partial<GetFootprintsRequest> = {}) {
+    return grpcUnary<GetFootprintsRequest, GetFootprintsResponse>(
+      "operation.blockchain.v1.BlockchainService", "GetFootprints", {
+        fromIndex: req.fromIndex ?? 0,
+        toIndex: req.toIndex ?? 0,
+        limit: req.limit ?? 100,
+        pluginId: req.pluginId ?? "",
+      },
+    );
+  },
+
+  verifyChain(req: Partial<VerifyBlockchainRequest> = {}) {
+    return grpcUnary<VerifyBlockchainRequest, VerifyBlockchainResponse>(
+      "operation.blockchain.v1.BlockchainService", "VerifyChain", {
+        fromIndex: req.fromIndex ?? 0,
+        toIndex: req.toIndex ?? 0,
+      },
+    );
+  },
+
+  getEmbeddingQueueStatus() {
+    return grpcUnary<Record<string, never>, GetEmbeddingQueueStatusResponse>(
+      "operation.blockchain.v1.BlockchainService", "GetEmbeddingQueueStatus", {},
+    );
+  },
+
+  getQdrantRoles() {
+    return grpcUnary<Record<string, never>, GetQdrantRolesResponse>(
+      "operation.blockchain.v1.BlockchainService", "GetQdrantRoles", {},
+    );
+  },
+};
+
+// ── BtrfsService (operation.btrfs.v1) ───────────────────────────────────────
+
+export const btrfsService = {
+  getSubvolumes() {
+    return grpcUnary<Record<string, never>, GetSubvolumesResponse>(
+      "operation.btrfs.v1.BtrfsService", "GetSubvolumes", {},
+    );
+  },
+
+  getSnapshots(req: Partial<BtrfsGetSnapshotsRequest> = {}) {
+    return grpcUnary<BtrfsGetSnapshotsRequest, BtrfsGetSnapshotsResponse>(
+      "operation.btrfs.v1.BtrfsService", "GetSnapshots", {
+        subvolume: req.subvolume ?? "",
+        limit: req.limit ?? 50,
+      },
+    );
+  },
+
+  getSendState() {
+    return grpcUnary<Record<string, never>, GetSendStateResponse>(
+      "operation.btrfs.v1.BtrfsService", "GetSendState", {},
+    );
+  },
+
+  getDrStatus() {
+    return grpcUnary<Record<string, never>, GetDrStatusResponse>(
+      "operation.btrfs.v1.BtrfsService", "GetDrStatus", {},
+    );
+  },
+};
+
+// ── PersonaService (operation.agents.v1) ────────────────────────────────────
+
+export const personaService = {
+  listPersonas() {
+    return grpcUnary<Record<string, never>, ListPersonasResponse>(
+      "operation.agents.v1.PersonaService", "ListPersonas", {},
+    );
+  },
+
+  getPersona(req: GetPersonaRequest) {
+    return grpcUnary<GetPersonaRequest, GetPersonaResponse>(
+      "operation.agents.v1.PersonaService", "GetPersona", req,
+    );
+  },
+
+  createPersona(req: CreatePersonaRequest) {
+    return grpcUnary<CreatePersonaRequest, CreatePersonaResponse>(
+      "operation.agents.v1.PersonaService", "CreatePersona", req,
+    );
+  },
+
+  updatePersona(req: UpdatePersonaRequest) {
+    return grpcUnary<UpdatePersonaRequest, UpdatePersonaResponse>(
+      "operation.agents.v1.PersonaService", "UpdatePersona", req,
+    );
+  },
+
+  deletePersona(req: DeletePersonaRequest) {
+    return grpcUnary<DeletePersonaRequest, DeletePersonaResponse>(
+      "operation.agents.v1.PersonaService", "DeletePersona", req,
+    );
+  },
+
+  listAgentRoutes() {
+    return grpcUnary<Record<string, never>, ListAgentRoutesResponse>(
+      "operation.agents.v1.PersonaService", "ListAgentRoutes", {},
+    );
+  },
+};
+
+// ── DataStoreService (operation.stores.v1) ──────────────────────────────────
+
+export const dataStoreService = {
+  getDataStores() {
+    return grpcUnary<Record<string, never>, GetDataStoresResponse>(
+      "operation.stores.v1.DataStoreService", "GetDataStores", {},
+    );
+  },
+
+  getStoreDetail(req: GetStoreDetailRequest) {
+    return grpcUnary<GetStoreDetailRequest, GetStoreDetailResponse>(
+      "operation.stores.v1.DataStoreService", "GetStoreDetail", req,
+    );
+  },
+};
+
+// ── EmbeddingService (operation.embedding.v1) ───────────────────────────────
+
+export const embeddingService = {
+  getQueue(req: Partial<GetEmbeddingQueueRequest> = {}) {
+    return grpcUnary<GetEmbeddingQueueRequest, GetEmbeddingQueueResponse>(
+      "operation.embedding.v1.EmbeddingService", "GetQueue", {
+        limit: req.limit ?? 50,
+        statusFilter: req.statusFilter ?? "",
+      },
+    );
+  },
+
+  getWorkerStatus() {
+    return grpcUnary<Record<string, never>, GetEmbeddingWorkerStatusResponse>(
+      "operation.embedding.v1.EmbeddingService", "GetWorkerStatus", {},
+    );
+  },
+
+  previewEmbeddingText(req: PreviewEmbeddingTextRequest) {
+    return grpcUnary<PreviewEmbeddingTextRequest, PreviewEmbeddingTextResponse>(
+      "operation.embedding.v1.EmbeddingService", "PreviewEmbeddingText", req,
+    );
+  },
+
+  getChannelDiagnostics() {
+    return grpcUnary<Record<string, never>, GetChannelDiagnosticsResponse>(
+      "operation.embedding.v1.EmbeddingService", "GetChannelDiagnostics", {},
+    );
+  },
 };
