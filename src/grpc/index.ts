@@ -5,6 +5,9 @@ export {
   // Domain services
   mailService, privacyService, registrationService,
   serviceManager, mcpService, accountabilityService,
+  // Architecture services (§2,5,6,8,9)
+  blockchainService, btrfsService, personaService,
+  dataStoreService, embeddingService,
   // Transport
   getTransport, resetTransport,
 } from "./client";
@@ -22,6 +25,11 @@ export * from "./types/registration";
 export * from "./types/service-manager";
 export * from "./types/mcp";
 export * from "./types/accountability";
+export * from "./types/blockchain";
+export * from "./types/btrfs";
+export * from "./types/persona";
+export * from "./types/data-stores";
+export * from "./types/embedding";
 
 // ── Protobuf helpers ────────────────────────────────────────────────────────
 export { structToObject, valueToJs, objectToStruct } from "./google/protobuf/struct";
