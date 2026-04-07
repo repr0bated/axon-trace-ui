@@ -138,7 +138,7 @@ export default function AgentsPage() {
 
   return (
     <>
-      <PageHeader title="Cognitive Agents" subtitle="Available and active agents from the schema registry."
+      <PageHeader title="Agents" subtitle="Available and active agents from the schema registry."
         actions={
           <div className="flex items-center gap-2">
             {personaSource && (
