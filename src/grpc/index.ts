@@ -21,6 +21,7 @@ export * from "./types/privacy";
 export * from "./types/registration";
 export * from "./types/service-manager";
 export * from "./types/mcp";
+export * from "./types/accountability";
 
 // ── Protobuf helpers ────────────────────────────────────────────────────────
 export { structToObject, valueToJs, objectToStruct } from "./google/protobuf/struct";
