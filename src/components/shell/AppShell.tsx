@@ -39,7 +39,6 @@ const NAV_GROUPS = [
       { title: "Knowledge", path: "/knowledge", icon: Brain },
       { title: "Embedding Pipeline", path: "/embedding", icon: Orbit },
     ],
-    ],
   },
   {
     label: "Infrastructure",
