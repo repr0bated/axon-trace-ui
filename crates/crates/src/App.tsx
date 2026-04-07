@@ -15,6 +15,7 @@ import ConfigPage from "./pages/ConfigPage";
 import InspectorPage from "./pages/InspectorPage";
 import StatePage from "./pages/StatePage";
 import KnowledgeStorePage from "./pages/claw/KnowledgeStorePage";
+import AccountabilityPage from "./pages/AccountabilityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
