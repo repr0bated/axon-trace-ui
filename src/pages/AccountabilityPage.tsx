@@ -236,7 +236,7 @@ function EpisodeCard({
               className={cn(
                 "text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded",
                 episode.outcomeClass === "success"
-                  ? "bg-green-500/10 text-green-500"
+                  ? "bg-accent/50 text-accent-foreground"
                   : episode.outcomeClass === "failure"
                   ? "bg-destructive/10 text-destructive"
                   : "bg-muted text-muted-foreground"
