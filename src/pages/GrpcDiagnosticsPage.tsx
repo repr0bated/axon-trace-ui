@@ -75,16 +75,20 @@ const statusIcon = (s: ProbeStatus) => {
   }
 };
 
-const statusBadge = (s: ProbeStatus) => {
+const statusBadge = (s: ProbeStatus, idle = false) => {
   const map: Record<ProbeStatus, string> = {
     idle: "secondary",
     running: "default",
     ok: "default",
     error: "destructive",
   };
+  const label =
+    s === "running" ? "Testing…" :
+    s === "ok" && idle ? "CONNECTED · IDLE" :
+    s.toUpperCase();
   return (
     <Badge variant={map[s] as any} className={cn(s === "ok" && "bg-emerald-500/20 text-emerald-400 border-emerald-500/30")}>
-      {s === "running" ? "Testing…" : s.toUpperCase()}
+      {label}
     </Badge>
   );
 };
@@ -473,7 +477,7 @@ export default function GrpcDiagnosticsPage() {
             <CardContent>
               <ScrollArea className="max-h-64">
                 {stateKeys === 0 ? (
-                  <p className="text-xs text-muted-foreground">No state projected yet — streams may not be connected</p>
+                  <p className="text-xs text-muted-foreground">No state projected yet — streams may be idle. Snapshot RPCs will populate this on connect.</p>
                 ) : (
                   <div className="space-y-1">
                     {Object.entries(latestState).slice(0, 100).map(([key, val]) => (
