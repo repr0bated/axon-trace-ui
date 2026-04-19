@@ -75,16 +75,20 @@ const statusIcon = (s: ProbeStatus) => {
   }
 };
 
-const statusBadge = (s: ProbeStatus) => {
+const statusBadge = (s: ProbeStatus, idle = false) => {
   const map: Record<ProbeStatus, string> = {
     idle: "secondary",
     running: "default",
     ok: "default",
     error: "destructive",
   };
+  const label =
+    s === "running" ? "Testing…" :
+    s === "ok" && idle ? "CONNECTED · IDLE" :
+    s.toUpperCase();
   return (
     <Badge variant={map[s] as any} className={cn(s === "ok" && "bg-emerald-500/20 text-emerald-400 border-emerald-500/30")}>
-      {s === "running" ? "Testing…" : s.toUpperCase()}
+      {label}
     </Badge>
   );
 };
@@ -160,6 +164,13 @@ export default function GrpcDiagnosticsPage() {
 
   /* ── Stream probe runner ─────────────────────────────────────────────── */
 
+  /**
+   * If the stream opens cleanly but no first event arrives within the grace
+   * period, treat it as connected/idle ("ok, waiting for events") rather than
+   * leaving the probe spinning forever.
+   */
+  const STREAM_IDLE_GRACE_MS = 2500;
+
   const runStreamProbe = useCallback((index: number) => {
     const probe = INITIAL_STREAM_PROBES[index];
     const key = probe.name;
@@ -172,6 +183,7 @@ export default function GrpcDiagnosticsPage() {
 
     const start = performance.now();
     let gotFirst = false;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
     try {
       let result: { stream: ReadableStream<unknown>; abort: () => void };
@@ -197,6 +209,17 @@ export default function GrpcDiagnosticsPage() {
 
       streamAbortsRef.current.set(key, result.abort);
 
+      // Promote to "ok (idle)" after the grace period if nothing arrived.
+      idleTimer = setTimeout(() => {
+        if (!gotFirst) {
+          setStreamProbes((prev) => prev.map((p, i) =>
+            i === index && p.status === "running"
+              ? { ...p, status: "ok" }
+              : p,
+          ));
+        }
+      }, STREAM_IDLE_GRACE_MS);
+
       const reader = result.stream.getReader();
       (async () => {
         try {
@@ -208,6 +231,7 @@ export default function GrpcDiagnosticsPage() {
             }
             if (!gotFirst) {
               gotFirst = true;
+              if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
               const firstMs = Math.round(performance.now() - start);
               setStreamProbes((prev) => prev.map((p, i) => i === index ? { ...p, status: "ok", firstMessageMs: firstMs, messagesReceived: 1 } : p));
             } else {
@@ -215,12 +239,14 @@ export default function GrpcDiagnosticsPage() {
             }
           }
         } catch (err) {
+          if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
           if ((err as Error).name !== "AbortError") {
             setStreamProbes((prev) => prev.map((p, i) => i === index ? { ...p, status: "error", error: (err as Error).message } : p));
           }
         }
       })();
     } catch (err) {
+      if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
       setStreamProbes((prev) => prev.map((p, i) => i === index ? { ...p, status: "error", error: (err as Error).message } : p));
     }
   }, []);
@@ -397,7 +423,10 @@ export default function GrpcDiagnosticsPage() {
                       <Activity className="h-3 w-3" /> {probe.messagesReceived} msgs
                     </span>
                   )}
-                  {statusBadge(probe.status)}
+                  {probe.status === "ok" && probe.messagesReceived === 0 && (
+                    <span className="text-[11px] text-muted-foreground italic">waiting for events…</span>
+                  )}
+                  {statusBadge(probe.status, probe.status === "ok" && probe.messagesReceived === 0)}
                   {probe.status === "running" || probe.status === "ok" ? (
                     <Button size="sm" variant="ghost" onClick={() => stopStreamProbe(i)}>
                       <XCircle className="h-3.5 w-3.5" />
@@ -448,7 +477,7 @@ export default function GrpcDiagnosticsPage() {
             <CardContent>
               <ScrollArea className="max-h-64">
                 {stateKeys === 0 ? (
-                  <p className="text-xs text-muted-foreground">No state projected yet — streams may not be connected</p>
+                  <p className="text-xs text-muted-foreground">No state projected yet — streams may be idle. Snapshot RPCs will populate this on connect.</p>
                 ) : (
                   <div className="space-y-1">
                     {Object.entries(latestState).slice(0, 100).map(([key, val]) => (

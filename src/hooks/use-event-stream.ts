@@ -21,6 +21,49 @@ export function useEventStream() {
   useEffect(() => {
     let mounted = true;
 
+    /**
+     * Seed latestState with one-shot unary snapshots so the UI shows real
+     * data even when streams are idle. Failures per call are swallowed —
+     * a healthy gateway with quiet streams should still light up.
+     */
+    async function seedFromSnapshots() {
+      const store = useEventStore.getState();
+
+      const snapshots: Array<[string, () => Promise<unknown>]> = [
+        ["snapshot.state", () => stateSync.getState({ pluginId: "", objectPath: "" })],
+        ["snapshot.ovsdb.bridges", () => ovsdbMirror.getBridgeState()],
+        ["snapshot.runtime.systemInfo", () => runtimeMirror.getSystemInfo()],
+        ["snapshot.runtime.services", () => runtimeMirror.listServices()],
+        ["snapshot.runtime.interfaces", () => runtimeMirror.listInterfaces()],
+        ["snapshot.runtime.numa", () => runtimeMirror.getNumaTopology()],
+        ["snapshot.registry.components", () => componentRegistry.discover()],
+      ];
+
+      const results = await Promise.allSettled(snapshots.map(([, fn]) => fn()));
+      if (!mounted) return;
+
+      results.forEach((res, idx) => {
+        const [key] = snapshots[idx];
+        if (res.status === "fulfilled") {
+          // Decode google.protobuf.Struct payloads when present; otherwise pass-through.
+          let value: unknown = res.value;
+          try {
+            const v = res.value as { state?: unknown };
+            if (v && typeof v === "object" && "state" in v && v.state) {
+              value = structToObject(v.state as Parameters<typeof structToObject>[0]);
+            }
+          } catch { /* keep raw */ }
+          store.updateState(key, value);
+        } else {
+          store.updateState(key, { error: (res.reason as Error)?.message ?? String(res.reason) });
+        }
+      });
+
+      if (results.some((r) => r.status === "fulfilled")) {
+        store.setConnected(true);
+      }
+    }
+
     function connectAll() {
       if (!mounted) return;
       const aborts: (() => void)[] = [];
@@ -28,6 +71,9 @@ export function useEventStream() {
       const s = useEventStore.getState();
       s.setConnected(false);
       s.setError(null);
+
+      // Kick off snapshot seeding in parallel with stream subscriptions.
+      void seedFromSnapshots();
 
       // ── 1. StateSync — live D-Bus property updates ────────────────────
       try {

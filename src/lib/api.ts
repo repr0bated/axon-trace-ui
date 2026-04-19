@@ -206,11 +206,36 @@ export const api = {
   },
 
   chat: {
-    history: (sessionKey: string) =>
-      request<ChatMessage[]>(`/chat/${encodeURIComponent(sessionKey)}/history`),
-    send: (sessionKey: string, message: string, attachments?: unknown[]) =>
-      request<ChatMessage>(`/chat`, {
-        method: "POST", body: JSON.stringify({ sessionKey, message, attachments }),
+    /** GET /api/chat/history/:session_id → { session_id, messages: [{ role, content }] } */
+    history: (sessionId: string) =>
+      request<{ session_id: string; messages: Array<{ role: string; content: unknown }> }>(
+        `/chat/history/${encodeURIComponent(sessionId)}`,
+      ),
+    /** POST /api/chat → { success, message, error, tools_executed, session_id, model, provider } */
+    send: (sessionId: string, message: string) =>
+      request<{
+        success: boolean;
+        message: unknown;
+        error?: string | null;
+        tools_executed?: unknown;
+        session_id: string;
+        model?: string;
+        provider?: string;
+      }>(`/chat`, {
+        method: "POST",
+        body: JSON.stringify({ session_id: sessionId, message }),
+      }),
+    /** POST /api/chat/sessions → { id, title, created_at, updated_at, message_count } */
+    createSession: (title?: string) =>
+      request<{
+        id: string;
+        title: string;
+        created_at: string;
+        updated_at: string;
+        message_count: number;
+      }>(`/chat/sessions`, {
+        method: "POST",
+        body: JSON.stringify(title ? { title } : {}),
       }),
   },
 

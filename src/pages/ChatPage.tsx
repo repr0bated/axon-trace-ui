@@ -4,23 +4,45 @@ import { JsonRenderer } from "@/components/json/JsonRenderer";
 import { MessageBubble, type LocalMessage } from "@/components/chat/MessageBubble";
 import { SystemPromptEditor } from "@/components/chat/SystemPromptEditor";
 import { useEventStore } from "@/stores/event-store";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { X, Maximize2, Minimize2, MessageSquare, FileText } from "lucide-react";
+import { X, Maximize2, MessageSquare, FileText } from "lucide-react";
 
 type ChatTab = "chat" | "system-prompt";
+
+/** Coerce arbitrary backend content into a renderable string. */
+function normalizeContent(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function mapBackendRole(role: string): LocalMessage["role"] {
+  if (role === "user" || role === "assistant" || role === "system" || role === "tool") return role;
+  return "system";
+}
+
+function makeId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
 export default function ChatPage() {
   const { connected } = useEventStore();
   const [activeTab, setActiveTab] = useState<ChatTab>("chat");
-  const [messages, setMessages] = useState<LocalMessage[]>([
-    { id: "sys-1", role: "system", content: "Connected to Operation-DBUS control plane. Ready for commands.", timestamp: Date.now() },
-  ]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [sessionKey, setSessionKey] = useState("default");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarContent, setSidebarContent] = useState<unknown>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [sending, setSending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -29,37 +51,101 @@ export default function ChatPage() {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
-  const handleSend = () => {
-    if (!draft.trim() || !connected) return;
+  /** Load history for the active session from the backend. */
+  const loadHistory = useCallback(async (sid: string) => {
+    setLoadingHistory(true);
+    setError(null);
+    try {
+      const resp = await api.chat.history(sid);
+      const mapped: LocalMessage[] = (resp.messages ?? []).map((m, i) => ({
+        id: `hist-${sid}-${i}`,
+        role: mapBackendRole(m.role),
+        content: normalizeContent(m.content),
+        timestamp: Date.now(),
+      }));
+      setMessages(
+        mapped.length > 0
+          ? mapped
+          : [{ id: makeId("sys"), role: "system", content: `Session "${sid}" ready.`, timestamp: Date.now() }],
+      );
+    } catch (err) {
+      setError((err as Error).message);
+      setMessages([{ id: makeId("sys"), role: "system", content: `Failed to load history: ${(err as Error).message}`, timestamp: Date.now() }]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  // Load history whenever session changes
+  useEffect(() => {
+    void loadHistory(sessionKey);
+  }, [sessionKey, loadHistory]);
+
+  const handleSend = async () => {
+    const text = draft.trim();
+    if (!text || sending) return;
+
     const userMsg: LocalMessage = {
-      id: `msg-${Date.now()}`,
+      id: makeId("msg"),
       role: "user",
-      content: draft.trim(),
+      content: text,
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, userMsg]);
     setDraft("");
     setSending(true);
+    setError(null);
 
-    setTimeout(() => {
-      const assistantMsg: LocalMessage = {
-        id: `msg-${Date.now()}-resp`,
-        role: "assistant",
-        content: `Acknowledged. Processing command: "${userMsg.content}"`,
-        timestamp: Date.now(),
-        toolCalls: userMsg.content.toLowerCase().includes("tool") ? [
-          { id: "tc-1", name: "dbus.list_services", arguments: { bus: "system" }, result: { services: ["org.freedesktop.DBus", "org.freedesktop.systemd1"] }, status: "completed" },
-        ] : undefined,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+    try {
+      const resp = await api.chat.send(sessionKey, text);
+      if (resp.success === false || resp.error) {
+        const errText = resp.error || "Backend returned an error.";
+        setMessages((prev) => [
+          ...prev,
+          { id: makeId("err"), role: "system", content: `Error: ${errText}`, timestamp: Date.now() },
+        ]);
+        setError(errText);
+      } else {
+        const assistantMsg: LocalMessage = {
+          id: makeId("resp"),
+          role: "assistant",
+          content: normalizeContent(resp.message),
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+      }
+    } catch (err) {
+      const msg = (err as Error).message;
+      setError(msg);
+      setMessages((prev) => [
+        ...prev,
+        { id: makeId("err"), role: "system", content: `Request failed: ${msg}`, timestamp: Date.now() },
+      ]);
+    } finally {
       setSending(false);
-    }, 800);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
+    }
+  };
+
+  const handleNewSession = async () => {
+    setError(null);
+    try {
+      const session = await api.chat.createSession();
+      setSessionKey(session.id);
+      // history load happens via the useEffect on sessionKey change
+    } catch (err) {
+      const msg = (err as Error).message;
+      setError(msg);
+      setMessages((prev) => [
+        ...prev,
+        { id: makeId("err"), role: "system", content: `Failed to create session: ${msg}`, timestamp: Date.now() },
+      ]);
     }
   };
 
@@ -86,15 +172,12 @@ export default function ChatPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <select
+              <input
                 value={sessionKey}
                 onChange={(e) => setSessionKey(e.target.value)}
-                className="px-3 py-1.5 rounded-md border border-input bg-card text-sm font-mono focus:border-ring outline-none"
-              >
-                <option value="default">default</option>
-                <option value="agent:main">agent:main</option>
-                <option value="debug">debug</option>
-              </select>
+                className="px-3 py-1.5 rounded-md border border-input bg-card text-sm font-mono focus:border-ring outline-none w-64"
+                placeholder="session id"
+              />
               <button onClick={() => setFocusMode(!focusMode)} className="p-2 rounded-md hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors" title="Toggle focus mode">
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -135,6 +218,9 @@ export default function ChatPage() {
           {/* Thread */}
           <div className={cn("flex flex-col flex-1 min-w-0", sidebarOpen && "flex-[0_0_60%]")}>
             <div ref={threadRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4" role="log">
+              {loadingHistory && (
+                <div className="text-xs text-muted-foreground text-center">Loading history…</div>
+              )}
               {messages.map((msg) => (
                 <MessageBubble
                   key={msg.id}
@@ -142,7 +228,7 @@ export default function ChatPage() {
                   onInspect={openInSidebar}
                   onAction={(action, payload) => {
                     const actionMsg: LocalMessage = {
-                      id: `msg-${Date.now()}-action`,
+                      id: makeId("action"),
                       role: "user",
                       content: `[Action: ${action}] ${JSON.stringify(payload)}`,
                       timestamp: Date.now(),
@@ -163,25 +249,30 @@ export default function ChatPage() {
 
             {/* Composer */}
             <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
-              {!connected && <Callout variant="danger" className="mb-3">Connect to the gateway to start chatting.</Callout>}
+              {error && <Callout variant="danger" className="mb-3">{error}</Callout>}
+              {!connected && !error && (
+                <Callout variant="default" className="mb-3">
+                  Event stream is idle — chat still works through the REST gateway.
+                </Callout>
+              )}
               <div className="flex gap-2">
                 <div className="flex-1 relative">
                   <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    disabled={!connected}
-                    placeholder={connected ? "Message (↩ to send, Shift+↩ for line breaks)" : "Connect to gateway first…"}
+                    disabled={sending}
+                    placeholder="Message (↩ to send, Shift+↩ for line breaks)"
                     className="w-full px-3 py-2.5 rounded-lg border border-input bg-card text-sm resize-none min-h-[44px] max-h-40 focus:border-ring focus:ring-1 focus:ring-ring outline-none transition-colors font-sans"
                     rows={1}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  <button onClick={() => setMessages([{ id: "sys-new", role: "system", content: "New session started.", timestamp: Date.now() }])} className="px-3 py-2 rounded-md border border-border bg-[hsl(var(--bg-elevated))] text-xs font-medium hover:bg-muted/30 transition-colors">
+                  <button onClick={handleNewSession} className="px-3 py-2 rounded-md border border-border bg-[hsl(var(--bg-elevated))] text-xs font-medium hover:bg-muted/30 transition-colors">
                     New session
                   </button>
-                  <button onClick={handleSend} disabled={!connected || !draft.trim()} className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5">
-                    {sending ? "Queue" : "Send"}<kbd className="text-[10px] bg-primary-foreground/20 px-1 rounded">↵</kbd>
+                  <button onClick={() => void handleSend()} disabled={sending || !draft.trim()} className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                    {sending ? "Sending" : "Send"}<kbd className="text-[10px] bg-primary-foreground/20 px-1 rounded">↵</kbd>
                   </button>
                 </div>
               </div>
