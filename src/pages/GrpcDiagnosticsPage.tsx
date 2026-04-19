@@ -419,7 +419,10 @@ export default function GrpcDiagnosticsPage() {
                       <Activity className="h-3 w-3" /> {probe.messagesReceived} msgs
                     </span>
                   )}
-                  {statusBadge(probe.status)}
+                  {probe.status === "ok" && probe.messagesReceived === 0 && (
+                    <span className="text-[11px] text-muted-foreground italic">waiting for events…</span>
+                  )}
+                  {statusBadge(probe.status, probe.status === "ok" && probe.messagesReceived === 0)}
                   {probe.status === "running" || probe.status === "ok" ? (
                     <Button size="sm" variant="ghost" onClick={() => stopStreamProbe(i)}>
                       <XCircle className="h-3.5 w-3.5" />
