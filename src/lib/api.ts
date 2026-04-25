@@ -24,7 +24,23 @@ import type {
   ChatMessage, LogEntry, ConfigSnapshot, LlmProvider, LlmModel,
 } from "@/types/api";
 
-const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+/**
+ * REST base URL resolution (mirrors src/grpc/client.ts):
+ *   1. Runtime override:  window.__OPDBUS_CONFIG__.apiBaseUrl
+ *   2. Build-time env:    VITE_API_BASE_URL
+ *   3. Same-origin:       "/api"
+ */
+function resolveApiBase(): string {
+  if (typeof window !== "undefined") {
+    const runtime = window.__OPDBUS_CONFIG__?.apiBaseUrl;
+    if (runtime) return runtime.replace(/\/+$/, "");
+  }
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+  return "/api";
+}
+
+const BASE = resolveApiBase();
 
 /** REST fallback for endpoints not yet gRPC-ified */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

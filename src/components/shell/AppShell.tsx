@@ -4,6 +4,7 @@ import {
   MessageSquare, BarChart3, Link2, Radio, FileText, Clock,
   Folder, Zap, Monitor, Settings, Bug, ScrollText, Sun, Moon, Laptop,
   Menu, Shield, GitBranch, Orbit, Box, Globe, Network, Workflow, Brain,
+  Moon as DreamIcon, Sparkles, Eye, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot, Pill } from "@/components/shell/Primitives";
@@ -59,6 +60,15 @@ const NAV_GROUPS = [
       { title: "State", path: "/state", icon: Monitor },
       { title: "Logs", path: "/logs", icon: ScrollText },
       { title: "gRPC Diagnostics", path: "/grpc", icon: Radio },
+    ],
+  },
+  {
+    label: "Coming Soon",
+    items: [
+      { title: "Dreams", path: "/dreams", icon: DreamIcon, placeholder: true },
+      { title: "Reflections", path: "/reflections", icon: Sparkles, placeholder: true },
+      { title: "Observability", path: "/observability", icon: Eye, placeholder: true },
+      { title: "Live Trace", path: "/live-trace", icon: Activity, placeholder: true },
     ],
   },
 ];

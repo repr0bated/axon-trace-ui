@@ -22,9 +22,36 @@
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport";
 
 // ── Transport Configuration ─────────────────────────────────────────────────
+//
+// Resolution order (first match wins):
+//   1. Runtime override:  window.__OPDBUS_CONFIG__.grpcBaseUrl  (injected by op-web)
+//   2. Build-time env:    VITE_GRPC_BASE_URL
+//   3. Same-origin:       window.location.origin   (when served from the gateway itself)
+//
+// This lets the dashboard follow whichever subdomain serves it
+// (assistant.3tched.com, openclaw.3tched.com, dashboard.3tched.com, …)
+// without a rebuild.
 
-const GRPC_BASE_URL =
-  import.meta.env.VITE_GRPC_BASE_URL || "https://dashboard.3tched.com";
+declare global {
+  interface Window {
+    __OPDBUS_CONFIG__?: { grpcBaseUrl?: string; apiBaseUrl?: string };
+  }
+}
+
+function resolveGrpcBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const runtime = window.__OPDBUS_CONFIG__?.grpcBaseUrl;
+    if (runtime) return runtime.replace(/\/+$/, "");
+  }
+  const envUrl = import.meta.env.VITE_GRPC_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+  return "";
+}
+
+const GRPC_BASE_URL = resolveGrpcBaseUrl();
 
 let _transport: GrpcWebFetchTransport | null = null;
 
