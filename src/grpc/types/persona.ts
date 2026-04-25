@@ -6,7 +6,7 @@
 export interface PersonaDefinition {
   name: string;
   systemPrompt: string;
-  model: string;           // e.g. "openclaw:reasoner-claude-sonnet"
+  model: string;           // e.g. "axon:reasoner-claude-sonnet"
   tools: string[];
   tags: string[];
   description?: string;
@@ -54,10 +54,10 @@ export interface DeletePersonaResponse {
   deleted: boolean;
 }
 
-// ── OpenClaw agent routing ──────────────────────────────────────────────────
+// ── Axon agent routing ──────────────────────────────────────────────────
 
 export interface AgentRoute {
-  modelString: string;     // e.g. "openclaw:embedder-voyage4lite"
+  modelString: string;     // e.g. "axon:embedder-voyage4lite"
   resolvedModel: string;   // e.g. "voyage-4-lite"
   provider: string;        // e.g. "Voyage API"
   fallback?: string;       // e.g. "op-ml local ONNX"

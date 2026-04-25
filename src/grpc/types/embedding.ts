@@ -39,7 +39,7 @@ export interface GetEmbeddingQueueResponse {
 export interface EmbeddingWorkerStatus {
   active: boolean;
   currentRequest?: string;  // block_hash being processed
-  provider: string;          // "openclaw:embedder-voyage4lite" or "op-ml"
+  provider: string;          // "axon:embedder-voyage4lite" or "op-ml"
   model: string;             // e.g. "voyage-4-lite"
   vectorDimension: number;   // 1024
   retryConfig: {

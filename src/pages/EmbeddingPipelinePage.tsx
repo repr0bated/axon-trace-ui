@@ -8,7 +8,7 @@ import type { QdrantCollectionRole } from "@/grpc/types/blockchain";
 // ── Mock data ───────────────────────────────────────────────────────────────
 
 const MOCK_WORKER: EmbeddingWorkerStatus = {
-  active: true, currentRequest: "block-abc123", provider: "openclaw:embedder-voyage4lite",
+  active: true, currentRequest: "block-abc123", provider: "axon:embedder-voyage4lite",
   model: "voyage-4-lite", vectorDimension: 1024,
   retryConfig: { maxAttempts: 5, baseDelayMs: 500, backoffMultiplier: 2 },
   stats: { embedsCompleted: 2847, embedsFailed: 3, avgLatencyMs: 142, uptime: "4d 12h" },
@@ -85,7 +85,7 @@ export default function EmbeddingPipelinePage() {
       <div>
         <h1 className="text-[26px] font-bold tracking-tight text-foreground">Embedding Pipeline</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Footprint → mpsc channel → Embedding Worker → OpenClaw/Voyage → Qdrant
+          Footprint → mpsc channel → Embedding Worker → Axon/Voyage → Qdrant
         </p>
       </div>
 

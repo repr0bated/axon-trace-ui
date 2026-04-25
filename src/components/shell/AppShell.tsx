@@ -10,7 +10,7 @@ import { StatusDot, Pill } from "@/components/shell/Primitives";
 import { useTheme } from "@/hooks/use-theme";
 import { useEventStore } from "@/stores/event-store";
 
-/** OpenClaw-style nav groups */
+/** Axon nav groups */
 const NAV_GROUPS = [
   {
     label: "Chat",
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="font-mono">{connected ? "OK" : "Offline"}</span>
           </Pill>
 
-          {/* Theme toggle — OpenClaw 3-way */}
+          {/* Theme toggle — Axon 3-way */}
           <div className="relative flex rounded-full border border-border bg-secondary p-0.5">
             {(["dark", "light", "system"] as const).map((m, i) => {
               const Icon = themeIcons[m];
