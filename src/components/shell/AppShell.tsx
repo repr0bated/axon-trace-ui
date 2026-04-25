@@ -185,19 +185,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     const active = item.path === "/"
                       ? location.pathname === "/"
                       : location.pathname === item.path;
+                    const isPlaceholder = "placeholder" in item && item.placeholder;
                     return (
                       <button
                         key={item.path}
-                        onClick={() => navigate(item.path)}
+                        onClick={() => !isPlaceholder && navigate(item.path)}
+                        disabled={isPlaceholder}
+                        title={isPlaceholder ? "Coming soon" : undefined}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors border border-transparent",
                           active
                             ? "bg-primary/10 text-foreground border-primary/20"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                            : isPlaceholder
+                              ? "text-muted-foreground/40 cursor-not-allowed italic"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
                         )}
                       >
-                        <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "opacity-70")} />
+                        <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : isPlaceholder ? "opacity-30" : "opacity-70")} />
                         <span className="whitespace-nowrap">{item.title}</span>
+                        {isPlaceholder && (
+                          <span className="ml-auto text-[9px] uppercase tracking-wider opacity-60">Soon</span>
+                        )}
                       </button>
                     );
                   })}
