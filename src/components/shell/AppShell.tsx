@@ -1,10 +1,35 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  MessageSquare, BarChart3, Link2, Radio, FileText, Clock,
-  Folder, Zap, Monitor, Settings, Bug, ScrollText, Sun, Moon, Laptop,
-  Menu, Shield, GitBranch, Orbit, Box, Globe, Network, Workflow, Brain,
-  Moon as DreamIcon, Sparkles, Eye, Activity,
+  MessageSquare,
+  BarChart3,
+  Link2,
+  Radio,
+  FileText,
+  Clock,
+  Folder,
+  Zap,
+  Monitor,
+  Settings,
+  Bug,
+  ScrollText,
+  Sun,
+  Moon,
+  Laptop,
+  Menu,
+  Shield,
+  GitBranch,
+  Orbit,
+  Box,
+  Globe,
+  Network,
+  Workflow,
+  Brain,
+  Bot,
+  Moon as DreamIcon,
+  Sparkles,
+  Eye,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot, Pill } from "@/components/shell/Primitives";
@@ -31,6 +56,7 @@ const NAV_GROUPS = [
     label: "Agent",
     items: [
       { title: "Agents", path: "/agents", icon: Folder },
+      { title: "Assistant", path: "/assistant", icon: Bot },
       { title: "Routable Models", path: "/models", icon: Radio },
       { title: "Tools", path: "/tools", icon: Zap },
       { title: "Workflows", path: "/workflows", icon: GitBranch },
@@ -66,9 +92,24 @@ const NAV_GROUPS = [
     label: "Coming Soon",
     items: [
       { title: "Dreams", path: "/dreams", icon: DreamIcon, placeholder: true },
-      { title: "Reflections", path: "/reflections", icon: Sparkles, placeholder: true },
-      { title: "Observability", path: "/observability", icon: Eye, placeholder: true },
-      { title: "Live Trace", path: "/live-trace", icon: Activity, placeholder: true },
+      {
+        title: "Reflections",
+        path: "/reflections",
+        icon: Sparkles,
+        placeholder: true,
+      },
+      {
+        title: "Observability",
+        path: "/observability",
+        icon: Eye,
+        placeholder: true,
+      },
+      {
+        title: "Live Trace",
+        path: "/live-trace",
+        icon: Activity,
+        placeholder: true,
+      },
     ],
   },
 ];
@@ -77,13 +118,18 @@ const themeIcons = { dark: Moon, light: Sun, system: Laptop } as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [navCollapsed, setNavCollapsed] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<string, boolean>
+  >({});
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { connected, health, lastError } = useEventStore();
 
-  const isFullHeight = location.pathname === "/chat" || location.pathname === "/workflows" || location.pathname === "/accountability";
+  const isFullHeight =
+    location.pathname === "/chat" ||
+    location.pathname === "/workflows" ||
+    location.pathname === "/accountability";
   const ThemeIcon = themeIcons[theme];
 
   const toggleGroup = (label: string) => {
@@ -94,7 +140,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div
       className="h-screen grid overflow-hidden transition-[grid-template-columns] duration-200 ease-out"
       style={{
-        gridTemplateColumns: navCollapsed ? "0px minmax(0,1fr)" : "220px minmax(0,1fr)",
+        gridTemplateColumns: navCollapsed
+          ? "0px minmax(0,1fr)"
+          : "220px minmax(0,1fr)",
         gridTemplateRows: "56px 1fr",
         gridTemplateAreas: `"topbar topbar" "nav content"`,
       }}
@@ -117,8 +165,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Shield className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight leading-none text-foreground">OPERATION-DBUS</span>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none mt-0.5">Control Plane</span>
+              <span className="text-base font-bold tracking-tight leading-none text-foreground">
+                OPERATION-DBUS
+              </span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none mt-0.5">
+                Control Plane
+              </span>
             </div>
           </div>
         </div>
@@ -138,10 +190,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <button
                   key={m}
-                  onClick={() => { toggleTheme(); }}
+                  onClick={() => {
+                    toggleTheme();
+                  }}
                   className={cn(
                     "h-6 w-6 grid place-items-center rounded-full transition-colors relative z-10",
-                    active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    active
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                   title={m}
                 >
@@ -160,14 +216,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           "overflow-y-auto overflow-x-hidden py-4 px-3 bg-background transition-all duration-200 ease-out min-h-0",
-          navCollapsed && "w-0 min-w-0 p-0 overflow-hidden opacity-0 pointer-events-none",
+          navCollapsed &&
+            "w-0 min-w-0 p-0 overflow-hidden opacity-0 pointer-events-none",
         )}
         style={{ gridArea: "nav", scrollbarWidth: "none" }}
       >
         {NAV_GROUPS.map((group) => {
           const isCollapsed = collapsedGroups[group.label] ?? false;
           const hasActive = group.items.some((item) =>
-            item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+            item.path === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(item.path),
           );
 
           return (
@@ -177,15 +236,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground rounded-md hover:text-foreground hover:bg-muted/30 transition-colors"
               >
                 <span>{group.label}</span>
-                <span className="text-[10px] opacity-50">{isCollapsed && !hasActive ? "+" : "−"}</span>
+                <span className="text-[10px] opacity-50">
+                  {isCollapsed && !hasActive ? "+" : "−"}
+                </span>
               </button>
               {(!isCollapsed || hasActive) && (
                 <div className="mt-1 space-y-px">
                   {group.items.map((item) => {
-                    const active = item.path === "/"
-                      ? location.pathname === "/"
-                      : location.pathname === item.path;
-                    const isPlaceholder = "placeholder" in item && item.placeholder;
+                    const active =
+                      item.path === "/"
+                        ? location.pathname === "/"
+                        : location.pathname === item.path;
+                    const isPlaceholder =
+                      "placeholder" in item && item.placeholder;
                     return (
                       <button
                         key={item.path}
@@ -201,10 +264,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                               : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
                         )}
                       >
-                        <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : isPlaceholder ? "opacity-30" : "opacity-70")} />
+                        <item.icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            active
+                              ? "text-primary"
+                              : isPlaceholder
+                                ? "opacity-30"
+                                : "opacity-70",
+                          )}
+                        />
                         <span className="whitespace-nowrap">{item.title}</span>
                         {isPlaceholder && (
-                          <span className="ml-auto text-[9px] uppercase tracking-wider opacity-60">Soon</span>
+                          <span className="ml-auto text-[9px] uppercase tracking-wider opacity-60">
+                            Soon
+                          </span>
                         )}
                       </button>
                     );
@@ -217,7 +291,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Resources link */}
         <div className="mt-6">
-          <div className="px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground">Resources</div>
+          <div className="px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground">
+            Resources
+          </div>
           <a
             href="https://docs.operation-dbus.dev"
             target="_blank"

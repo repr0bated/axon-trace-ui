@@ -30,10 +30,13 @@ import AccountabilityPage from "./pages/AccountabilityPage";
 import BtrfsPage from "./pages/BtrfsPage";
 import DataStoresPage from "./pages/DataStoresPage";
 import EmbeddingPipelinePage from "./pages/EmbeddingPipelinePage";
+import AssistantPage from "./pages/AssistantPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 5000, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 5000, refetchOnWindowFocus: false },
+  },
 });
 
 function AppInner() {
@@ -59,14 +62,15 @@ function AppInner() {
         <Route path="/containers" element={<ContainersPage />} />
         <Route path="/privacy-network" element={<PrivacyNetworkPage />} />
         <Route path="/ovs" element={<OpenSwitchPage />} />
-            <Route path="/openflow" element={<OpenFlowPage />} />
-            <Route path="/knowledge" element={<KnowledgePage />} />
-            <Route path="/grpc" element={<GrpcDiagnosticsPage />} />
-            <Route path="/accountability" element={<AccountabilityPage />} />
-            <Route path="/btrfs" element={<BtrfsPage />} />
-            <Route path="/data-stores" element={<DataStoresPage />} />
-            <Route path="/embedding" element={<EmbeddingPipelinePage />} />
-            <Route path="*" element={<NotFound />} />
+        <Route path="/openflow" element={<OpenFlowPage />} />
+        <Route path="/knowledge" element={<KnowledgePage />} />
+        <Route path="/grpc" element={<GrpcDiagnosticsPage />} />
+        <Route path="/accountability" element={<AccountabilityPage />} />
+        <Route path="/btrfs" element={<BtrfsPage />} />
+        <Route path="/data-stores" element={<DataStoresPage />} />
+        <Route path="/embedding" element={<EmbeddingPipelinePage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AppShell>
   );

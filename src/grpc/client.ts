@@ -93,7 +93,7 @@ async function grpcUnary<TReq, TResp>(
     method: "POST",
     headers: {
       "Content-Type": "application/grpc-web",
-      "Accept": "application/grpc-web",
+      Accept: "application/grpc-web",
       "x-grpc-web": "1",
     },
     body: frame,
@@ -153,7 +153,7 @@ function grpcServerStream<TReq, TResp>(
     method: "POST",
     headers: {
       "Content-Type": "application/grpc-web",
-      "Accept": "application/grpc-web",
+      Accept: "application/grpc-web",
       "x-grpc-web": "1",
     },
     body: frame,
@@ -165,7 +165,9 @@ function grpcServerStream<TReq, TResp>(
       try {
         const res = await responsePromise;
         if (!res.ok || !res.body) {
-          ctrl.error(new Error(`gRPC stream ${service}/${method} failed: ${res.status}`));
+          ctrl.error(
+            new Error(`gRPC stream ${service}/${method} failed: ${res.status}`),
+          );
           return;
         }
 
@@ -216,133 +218,211 @@ function grpcServerStream<TReq, TResp>(
 // ── Type Imports ────────────────────────────────────────────────────────────
 
 import type {
-  SubscribeRequest as StateSyncSubscribeRequest, StateChange, MutateRequest, MutateResponse,
-  GetStateRequest, GetStateResponse, BatchMutateRequest, BatchMutateResponse,
+  SubscribeRequest as StateSyncSubscribeRequest,
+  StateChange,
+  MutateRequest,
+  MutateResponse,
+  GetStateRequest,
+  GetStateResponse,
+  BatchMutateRequest,
+  BatchMutateResponse,
 } from "./types/state-sync";
 
 import type {
-  ListPluginsResponse, GetSchemaRequest, GetSchemaResponse,
-  CallMethodRequest, CallMethodResponse,
-  GetPropertyRequest, GetPropertyResponse,
-  SetPropertyRequest, SetPropertyResponse,
-  SubscribeSignalsRequest, Signal,
+  ListPluginsResponse,
+  GetSchemaRequest,
+  GetSchemaResponse,
+  CallMethodRequest,
+  CallMethodResponse,
+  GetPropertyRequest,
+  GetPropertyResponse,
+  SetPropertyRequest,
+  SetPropertyResponse,
+  SubscribeSignalsRequest,
+  Signal,
 } from "./types/plugin-service";
 
 import type {
-  GetEventsRequest, GetEventsResponse, ChainEvent,
-  SubscribeEventsRequest, VerifyChainRequest, VerifyChainResponse,
-  GetProofRequest, GetProofResponse,
-  ProveTagImmutabilityRequest, ProveTagImmutabilityResponse,
-  GetSnapshotRequest, GetSnapshotResponse,
-  CreateSnapshotRequest, CreateSnapshotResponse,
+  GetEventsRequest,
+  GetEventsResponse,
+  ChainEvent,
+  SubscribeEventsRequest,
+  VerifyChainRequest,
+  VerifyChainResponse,
+  GetProofRequest,
+  GetProofResponse,
+  ProveTagImmutabilityRequest,
+  ProveTagImmutabilityResponse,
+  GetSnapshotRequest,
+  GetSnapshotResponse,
+  CreateSnapshotRequest,
+  CreateSnapshotResponse,
 } from "./types/event-chain";
 
 import type {
-  OvsdbListDbsResponse, OvsdbGetSchemaResponse,
-  OvsdbTransactRequest, OvsdbTransactResponse,
-  OvsdbMonitorRequest, OvsdbUpdate,
-  OvsdbEchoRequest, OvsdbEchoResponse,
-  OvsdbDumpDbRequest, OvsdbDumpDbResponse,
+  OvsdbListDbsResponse,
+  OvsdbGetSchemaResponse,
+  OvsdbTransactRequest,
+  OvsdbTransactResponse,
+  OvsdbMonitorRequest,
+  OvsdbUpdate,
+  OvsdbEchoRequest,
+  OvsdbEchoResponse,
+  OvsdbDumpDbRequest,
+  OvsdbDumpDbResponse,
   OvsdbGetBridgeStateResponse,
 } from "./types/ovsdb-mirror";
 
 import type {
-  RuntimeSystemInfo, RuntimeServiceInfo, RuntimeListServicesResponse,
-  RuntimeStreamMetricsRequest, RuntimeMetricUpdate,
-  RuntimeListInterfacesResponse, RuntimeNumaTopologyResponse,
+  RuntimeSystemInfo,
+  RuntimeServiceInfo,
+  RuntimeListServicesResponse,
+  RuntimeStreamMetricsRequest,
+  RuntimeMetricUpdate,
+  RuntimeListInterfacesResponse,
+  RuntimeNumaTopologyResponse,
 } from "./types/runtime-mirror";
 
 import type {
-  DiscoverRequest, DiscoverResponse, WatchRequest, RegistryEvent,
+  DiscoverRequest,
+  DiscoverResponse,
+  WatchRequest,
+  RegistryEvent,
   ComponentInfo,
 } from "./types/registry";
 
 import type {
-  SendEmailRequest, SendEmailResponse,
-  GetInboxRequest, GetInboxResponse,
-  GetMessageRequest, GetMessageResponse,
-  GetMailStatusRequest, GetMailStatusResponse,
-  ListMailAccountsRequest, ListMailAccountsResponse,
-  AdminMailActionRequest, AdminMailActionResponse,
-  CheckMailServerRequest, CheckMailServerResponse,
+  SendEmailRequest,
+  SendEmailResponse,
+  GetInboxRequest,
+  GetInboxResponse,
+  GetMessageRequest,
+  GetMessageResponse,
+  GetMailStatusRequest,
+  GetMailStatusResponse,
+  ListMailAccountsRequest,
+  ListMailAccountsResponse,
+  AdminMailActionRequest,
+  AdminMailActionResponse,
+  CheckMailServerRequest,
+  CheckMailServerResponse,
 } from "./types/mail";
 
 import type {
-  EnsurePrivacyNetworkRequest, EnsurePrivacyNetworkResponse,
-  GetNetworkStatusRequest, GetNetworkStatusResponse,
-  ProvisionUserRequest, ProvisionUserResponse,
-  GetPrivacyWireGuardConfigRequest, GetPrivacyWireGuardConfigResponse,
-  ManageComponentRequest, ManageComponentResponse,
-  GetNetworkTopologyRequest, GetNetworkTopologyResponse,
-  HealthCheckRequest, HealthCheckResponse,
-  ConfigurePacketRoutingRequest, ConfigurePacketRoutingResponse,
-  GenerateWireGuardKeyPairRequest, GenerateWireGuardKeyPairResponse,
+  EnsurePrivacyNetworkRequest,
+  EnsurePrivacyNetworkResponse,
+  GetNetworkStatusRequest,
+  GetNetworkStatusResponse,
+  ProvisionUserRequest,
+  ProvisionUserResponse,
+  GetPrivacyWireGuardConfigRequest,
+  GetPrivacyWireGuardConfigResponse,
+  ManageComponentRequest,
+  ManageComponentResponse,
+  GetNetworkTopologyRequest,
+  GetNetworkTopologyResponse,
+  HealthCheckRequest,
+  HealthCheckResponse,
+  ConfigurePacketRoutingRequest,
+  ConfigurePacketRoutingResponse,
+  GenerateWireGuardKeyPairRequest,
+  GenerateWireGuardKeyPairResponse,
 } from "./types/privacy";
 
 import type {
-  SendMagicLinkRequest, SendMagicLinkResponse,
-  VerifyMagicLinkRequest, VerifyMagicLinkResponse,
-  RegisterUserRequest, RegisterUserResponse,
-  GetUserStatusRequest, GetUserStatusResponse,
-  ListUsersRequest, ListUsersResponse,
-  GetWireGuardConfigRequest, GetWireGuardConfigResponse,
-  AdminUserActionRequest, AdminUserActionResponse,
+  SendMagicLinkRequest,
+  SendMagicLinkResponse,
+  VerifyMagicLinkRequest,
+  VerifyMagicLinkResponse,
+  RegisterUserRequest,
+  RegisterUserResponse,
+  GetUserStatusRequest,
+  GetUserStatusResponse,
+  ListUsersRequest,
+  ListUsersResponse,
+  GetWireGuardConfigRequest,
+  GetWireGuardConfigResponse,
+  AdminUserActionRequest,
+  AdminUserActionResponse,
 } from "./types/registration";
 
 import type {
-  ServiceDef, ServiceStatus, ServiceEvent,
-  GetServiceResponse, ListServicesResponse as SvcMgrListResponse,
+  ServiceDef,
+  ServiceStatus,
+  ServiceEvent,
+  GetServiceResponse,
+  ListServicesResponse as SvcMgrListResponse,
   WatchServicesRequest,
 } from "./types/service-manager";
 
 import type {
-  InitializeRequest, InitializeResponse,
-  ListToolsRequest, ListToolsResponse as McpListToolsResponse,
-  CallToolRequest, CallToolResponse, ToolOutput,
-  McpEvent, SubscribeRequest as McpSubscribeRequest, HealthResponse as McpHealthResponse
+  InitializeRequest,
+  InitializeResponse,
+  ListToolsRequest,
+  ListToolsResponse as McpListToolsResponse,
+  CallToolRequest,
+  CallToolResponse,
+  ToolOutput,
+  McpEvent,
+  SubscribeRequest as McpSubscribeRequest,
+  HealthResponse as McpHealthResponse,
 } from "./types/mcp";
 
 import type {
-  SearchEpisodesRequest, SearchEpisodesResponse,
-  GetEpisodeRequest, GetEpisodeResponse,
+  SearchEpisodesRequest,
+  SearchEpisodesResponse,
+  GetEpisodeRequest,
+  GetEpisodeResponse,
   CollectionStatsResponse,
-  ChatWithContextRequest, ChatWithContextResponse,
-  SubscribeEpisodesRequest, EpisodeEvent,
+  ChatWithContextRequest,
+  ChatWithContextResponse,
+  SubscribeEpisodesRequest,
+  EpisodeEvent,
   GetPiiPolicyResponse,
 } from "./types/accountability";
 
 import type {
-  GetFootprintsRequest, GetFootprintsResponse,
-  VerifyBlockchainRequest, VerifyBlockchainResponse,
+  GetFootprintsRequest,
+  GetFootprintsResponse,
+  VerifyBlockchainRequest,
+  VerifyBlockchainResponse,
   GetEmbeddingQueueStatusResponse,
   GetQdrantRolesResponse,
 } from "./types/blockchain";
 
 import type {
   GetSubvolumesResponse,
-  GetSnapshotsRequest as BtrfsGetSnapshotsRequest, GetSnapshotsResponse as BtrfsGetSnapshotsResponse,
+  GetSnapshotsRequest as BtrfsGetSnapshotsRequest,
+  GetSnapshotsResponse as BtrfsGetSnapshotsResponse,
   GetSendStateResponse,
   GetDrStatusResponse,
 } from "./types/btrfs";
 
 import type {
   ListPersonasResponse,
-  GetPersonaRequest, GetPersonaResponse,
-  CreatePersonaRequest, CreatePersonaResponse,
-  UpdatePersonaRequest, UpdatePersonaResponse,
-  DeletePersonaRequest, DeletePersonaResponse,
+  GetPersonaRequest,
+  GetPersonaResponse,
+  CreatePersonaRequest,
+  CreatePersonaResponse,
+  UpdatePersonaRequest,
+  UpdatePersonaResponse,
+  DeletePersonaRequest,
+  DeletePersonaResponse,
   ListAgentRoutesResponse,
 } from "./types/persona";
 
 import type {
   GetDataStoresResponse,
-  GetStoreDetailRequest, GetStoreDetailResponse,
+  GetStoreDetailRequest,
+  GetStoreDetailResponse,
 } from "./types/data-stores";
 
 import type {
-  GetEmbeddingQueueRequest, GetEmbeddingQueueResponse,
+  GetEmbeddingQueueRequest,
+  GetEmbeddingQueueResponse,
   GetEmbeddingWorkerStatusResponse,
-  PreviewEmbeddingTextRequest, PreviewEmbeddingTextResponse,
+  PreviewEmbeddingTextRequest,
+  PreviewEmbeddingTextResponse,
   GetChannelDiagnosticsResponse,
 } from "./types/embedding";
 
@@ -361,25 +441,33 @@ export const stateSync = {
       includeInitialState: req.includeInitialState ?? true,
     };
     return grpcServerStream<StateSyncSubscribeRequest, StateChange>(
-      "operation.v1.StateSync", "Subscribe", full,
+      "operation.v1.StateSync",
+      "Subscribe",
+      full,
     );
   },
 
   mutate(req: MutateRequest) {
     return grpcUnary<MutateRequest, MutateResponse>(
-      "operation.v1.StateSync", "Mutate", req,
+      "operation.v1.StateSync",
+      "Mutate",
+      req,
     );
   },
 
   getState(req: GetStateRequest) {
     return grpcUnary<GetStateRequest, GetStateResponse>(
-      "operation.v1.StateSync", "GetState", req,
+      "operation.v1.StateSync",
+      "GetState",
+      req,
     );
   },
 
   batchMutate(req: BatchMutateRequest) {
     return grpcUnary<BatchMutateRequest, BatchMutateResponse>(
-      "operation.v1.StateSync", "BatchMutate", req,
+      "operation.v1.StateSync",
+      "BatchMutate",
+      req,
     );
   },
 };
@@ -389,37 +477,49 @@ export const stateSync = {
 export const pluginService = {
   listPlugins() {
     return grpcUnary<Record<string, never>, ListPluginsResponse>(
-      "operation.v1.PluginService", "ListPlugins", {},
+      "operation.v1.PluginService",
+      "ListPlugins",
+      {},
     );
   },
 
   getSchema(req: GetSchemaRequest) {
     return grpcUnary<GetSchemaRequest, GetSchemaResponse>(
-      "operation.v1.PluginService", "GetSchema", req,
+      "operation.v1.PluginService",
+      "GetSchema",
+      req,
     );
   },
 
   callMethod(req: CallMethodRequest) {
     return grpcUnary<CallMethodRequest, CallMethodResponse>(
-      "operation.v1.PluginService", "CallMethod", req,
+      "operation.v1.PluginService",
+      "CallMethod",
+      req,
     );
   },
 
   getProperty(req: GetPropertyRequest) {
     return grpcUnary<GetPropertyRequest, GetPropertyResponse>(
-      "operation.v1.PluginService", "GetProperty", req,
+      "operation.v1.PluginService",
+      "GetProperty",
+      req,
     );
   },
 
   setProperty(req: SetPropertyRequest) {
     return grpcUnary<SetPropertyRequest, SetPropertyResponse>(
-      "operation.v1.PluginService", "SetProperty", req,
+      "operation.v1.PluginService",
+      "SetProperty",
+      req,
     );
   },
 
   subscribeSignals(req: SubscribeSignalsRequest) {
     return grpcServerStream<SubscribeSignalsRequest, Signal>(
-      "operation.v1.PluginService", "SubscribeSignals", req,
+      "operation.v1.PluginService",
+      "SubscribeSignals",
+      req,
     );
   },
 };
@@ -429,7 +529,9 @@ export const pluginService = {
 export const eventChainService = {
   getEvents(req: Partial<GetEventsRequest> = {}) {
     return grpcUnary<GetEventsRequest, GetEventsResponse>(
-      "operation.v1.EventChainService", "GetEvents", {
+      "operation.v1.EventChainService",
+      "GetEvents",
+      {
         fromEventId: req.fromEventId ?? 0,
         toEventId: req.toEventId ?? 0,
         limit: req.limit ?? 100,
@@ -442,7 +544,9 @@ export const eventChainService = {
 
   subscribeEvents(req: Partial<SubscribeEventsRequest> = {}) {
     return grpcServerStream<SubscribeEventsRequest, ChainEvent>(
-      "operation.v1.EventChainService", "SubscribeEvents", {
+      "operation.v1.EventChainService",
+      "SubscribeEvents",
+      {
         fromEventId: req.fromEventId ?? 0,
         pluginId: req.pluginId ?? "",
         tags: req.tags ?? [],
@@ -452,31 +556,41 @@ export const eventChainService = {
 
   verifyChain(req: VerifyChainRequest) {
     return grpcUnary<VerifyChainRequest, VerifyChainResponse>(
-      "operation.v1.EventChainService", "VerifyChain", req,
+      "operation.v1.EventChainService",
+      "VerifyChain",
+      req,
     );
   },
 
   getProof(req: GetProofRequest) {
     return grpcUnary<GetProofRequest, GetProofResponse>(
-      "operation.v1.EventChainService", "GetProof", req,
+      "operation.v1.EventChainService",
+      "GetProof",
+      req,
     );
   },
 
   proveTagImmutability(req: ProveTagImmutabilityRequest) {
     return grpcUnary<ProveTagImmutabilityRequest, ProveTagImmutabilityResponse>(
-      "operation.v1.EventChainService", "ProveTagImmutability", req,
+      "operation.v1.EventChainService",
+      "ProveTagImmutability",
+      req,
     );
   },
 
   getSnapshot(req: GetSnapshotRequest) {
     return grpcUnary<GetSnapshotRequest, GetSnapshotResponse>(
-      "operation.v1.EventChainService", "GetSnapshot", req,
+      "operation.v1.EventChainService",
+      "GetSnapshot",
+      req,
     );
   },
 
   createSnapshot(req: CreateSnapshotRequest) {
     return grpcUnary<CreateSnapshotRequest, CreateSnapshotResponse>(
-      "operation.v1.EventChainService", "CreateSnapshot", req,
+      "operation.v1.EventChainService",
+      "CreateSnapshot",
+      req,
     );
   },
 };
@@ -486,43 +600,57 @@ export const eventChainService = {
 export const ovsdbMirror = {
   listDbs() {
     return grpcUnary<Record<string, never>, OvsdbListDbsResponse>(
-      "operation.v1.OvsdbMirror", "ListDbs", {},
+      "operation.v1.OvsdbMirror",
+      "ListDbs",
+      {},
     );
   },
 
   getSchema(db: string) {
     return grpcUnary<{ database: string }, OvsdbGetSchemaResponse>(
-      "operation.v1.OvsdbMirror", "GetSchema", { database: db },
+      "operation.v1.OvsdbMirror",
+      "GetSchema",
+      { database: db },
     );
   },
 
   transact(req: OvsdbTransactRequest) {
     return grpcUnary<OvsdbTransactRequest, OvsdbTransactResponse>(
-      "operation.v1.OvsdbMirror", "Transact", req,
+      "operation.v1.OvsdbMirror",
+      "Transact",
+      req,
     );
   },
 
   monitor(req: OvsdbMonitorRequest) {
     return grpcServerStream<OvsdbMonitorRequest, OvsdbUpdate>(
-      "operation.v1.OvsdbMirror", "Monitor", req,
+      "operation.v1.OvsdbMirror",
+      "Monitor",
+      req,
     );
   },
 
   echo(req: OvsdbEchoRequest) {
     return grpcUnary<OvsdbEchoRequest, OvsdbEchoResponse>(
-      "operation.v1.OvsdbMirror", "Echo", req,
+      "operation.v1.OvsdbMirror",
+      "Echo",
+      req,
     );
   },
 
   dumpDb(db: string) {
     return grpcUnary<OvsdbDumpDbRequest, OvsdbDumpDbResponse>(
-      "operation.v1.OvsdbMirror", "DumpDb", { database: db },
+      "operation.v1.OvsdbMirror",
+      "DumpDb",
+      { database: db },
     );
   },
 
   getBridgeState(bridgeName = "") {
     return grpcUnary<{ bridgeName: string }, OvsdbGetBridgeStateResponse>(
-      "operation.v1.OvsdbMirror", "GetBridgeState", { bridgeName },
+      "operation.v1.OvsdbMirror",
+      "GetBridgeState",
+      { bridgeName },
     );
   },
 };
@@ -532,25 +660,33 @@ export const ovsdbMirror = {
 export const runtimeMirror = {
   getSystemInfo() {
     return grpcUnary<Record<string, never>, RuntimeSystemInfo>(
-      "operation.v1.RuntimeMirror", "GetSystemInfo", {},
+      "operation.v1.RuntimeMirror",
+      "GetSystemInfo",
+      {},
     );
   },
 
   listServices(stateFilter = "") {
     return grpcUnary<{ stateFilter: string }, RuntimeListServicesResponse>(
-      "operation.v1.RuntimeMirror", "ListServices", { stateFilter },
+      "operation.v1.RuntimeMirror",
+      "ListServices",
+      { stateFilter },
     );
   },
 
   getService(serviceName: string) {
     return grpcUnary<{ serviceName: string }, RuntimeServiceInfo>(
-      "operation.v1.RuntimeMirror", "GetService", { serviceName },
+      "operation.v1.RuntimeMirror",
+      "GetService",
+      { serviceName },
     );
   },
 
   streamMetrics(req: Partial<RuntimeStreamMetricsRequest> = {}) {
     return grpcServerStream<RuntimeStreamMetricsRequest, RuntimeMetricUpdate>(
-      "operation.v1.RuntimeMirror", "StreamMetrics", {
+      "operation.v1.RuntimeMirror",
+      "StreamMetrics",
+      {
         intervalSeconds: req.intervalSeconds ?? 5,
         categories: req.categories ?? [],
       },
@@ -559,13 +695,17 @@ export const runtimeMirror = {
 
   listInterfaces() {
     return grpcUnary<Record<string, never>, RuntimeListInterfacesResponse>(
-      "operation.v1.RuntimeMirror", "ListInterfaces", {},
+      "operation.v1.RuntimeMirror",
+      "ListInterfaces",
+      {},
     );
   },
 
   getNumaTopology() {
     return grpcUnary<Record<string, never>, RuntimeNumaTopologyResponse>(
-      "operation.v1.RuntimeMirror", "GetNumaTopology", {},
+      "operation.v1.RuntimeMirror",
+      "GetNumaTopology",
+      {},
     );
   },
 };
@@ -575,7 +715,9 @@ export const runtimeMirror = {
 export const componentRegistry = {
   discover(req: Partial<DiscoverRequest> = {}) {
     return grpcUnary<DiscoverRequest, DiscoverResponse>(
-      "operation.registry.v1.ComponentRegistry", "Discover", {
+      "operation.registry.v1.ComponentRegistry",
+      "Discover",
+      {
         componentType: req.componentType ?? "",
         capability: req.capability ?? "",
         metadataKey: req.metadataKey ?? "",
@@ -587,7 +729,9 @@ export const componentRegistry = {
 
   watch(req: Partial<WatchRequest> = {}) {
     return grpcServerStream<WatchRequest, RegistryEvent>(
-      "operation.registry.v1.ComponentRegistry", "Watch", {
+      "operation.registry.v1.ComponentRegistry",
+      "Watch",
+      {
         componentTypes: req.componentTypes ?? [],
         includeExisting: req.includeExisting ?? true,
       },
@@ -595,9 +739,12 @@ export const componentRegistry = {
   },
 
   getComponent(componentId: string) {
-    return grpcUnary<{ componentId: string }, { component: ComponentInfo; found: boolean }>(
-      "operation.registry.v1.ComponentRegistry", "GetComponent", { componentId },
-    );
+    return grpcUnary<
+      { componentId: string },
+      { component: ComponentInfo; found: boolean }
+    >("operation.registry.v1.ComponentRegistry", "GetComponent", {
+      componentId,
+    });
   },
 };
 
@@ -610,31 +757,41 @@ export const componentRegistry = {
 export const mailService = {
   sendEmail(req: SendEmailRequest) {
     return grpcUnary<SendEmailRequest, SendEmailResponse>(
-      "operation.mail.v1.MailService", "SendEmail", req,
+      "operation.mail.v1.MailService",
+      "SendEmail",
+      req,
     );
   },
 
   getInbox(req: GetInboxRequest) {
     return grpcUnary<GetInboxRequest, GetInboxResponse>(
-      "operation.mail.v1.MailService", "GetInbox", req,
+      "operation.mail.v1.MailService",
+      "GetInbox",
+      req,
     );
   },
 
   getMessage(req: GetMessageRequest) {
     return grpcUnary<GetMessageRequest, GetMessageResponse>(
-      "operation.mail.v1.MailService", "GetMessage", req,
+      "operation.mail.v1.MailService",
+      "GetMessage",
+      req,
     );
   },
 
   getMailStatus(req: Partial<GetMailStatusRequest> = {}) {
     return grpcUnary<GetMailStatusRequest, GetMailStatusResponse>(
-      "operation.mail.v1.MailService", "GetMailStatus", { domain: req.domain ?? "" },
+      "operation.mail.v1.MailService",
+      "GetMailStatus",
+      { domain: req.domain ?? "" },
     );
   },
 
   listMailAccounts(req: Partial<ListMailAccountsRequest> = {}) {
     return grpcUnary<ListMailAccountsRequest, ListMailAccountsResponse>(
-      "operation.mail.v1.MailService", "ListMailAccounts", {
+      "operation.mail.v1.MailService",
+      "ListMailAccounts",
+      {
         domain: req.domain ?? "",
         includeInactive: req.includeInactive ?? false,
       },
@@ -643,13 +800,17 @@ export const mailService = {
 
   adminMailAction(req: AdminMailActionRequest) {
     return grpcUnary<AdminMailActionRequest, AdminMailActionResponse>(
-      "operation.mail.v1.MailService", "AdminMailAction", req,
+      "operation.mail.v1.MailService",
+      "AdminMailAction",
+      req,
     );
   },
 
   checkMailServer(req: Partial<CheckMailServerRequest> = {}) {
     return grpcUnary<CheckMailServerRequest, CheckMailServerResponse>(
-      "operation.mail.v1.MailService", "CheckMailServer", {
+      "operation.mail.v1.MailService",
+      "CheckMailServer",
+      {
         domain: req.domain ?? "",
         checkSmtp: req.checkSmtp ?? true,
         checkImap: req.checkImap ?? true,
@@ -664,7 +825,9 @@ export const mailService = {
 export const privacyService = {
   ensurePrivacyNetwork(req: Partial<EnsurePrivacyNetworkRequest> = {}) {
     return grpcUnary<EnsurePrivacyNetworkRequest, EnsurePrivacyNetworkResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "EnsurePrivacyNetwork", {
+      "operation.privacy.v1.PrivacyNetworkService",
+      "EnsurePrivacyNetwork",
+      {
         domain: req.domain ?? "",
         forceReprovision: req.forceReprovision ?? false,
       },
@@ -673,7 +836,9 @@ export const privacyService = {
 
   getNetworkStatus(req: Partial<GetNetworkStatusRequest> = {}) {
     return grpcUnary<GetNetworkStatusRequest, GetNetworkStatusResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "GetNetworkStatus", {
+      "operation.privacy.v1.PrivacyNetworkService",
+      "GetNetworkStatus",
+      {
         component: req.component ?? "all",
       },
     );
@@ -681,25 +846,36 @@ export const privacyService = {
 
   provisionUser(req: ProvisionUserRequest) {
     return grpcUnary<ProvisionUserRequest, ProvisionUserResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "ProvisionUser", req,
+      "operation.privacy.v1.PrivacyNetworkService",
+      "ProvisionUser",
+      req,
     );
   },
 
   getPrivacyWireGuardConfig(req: GetPrivacyWireGuardConfigRequest) {
-    return grpcUnary<GetPrivacyWireGuardConfigRequest, GetPrivacyWireGuardConfigResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "GetPrivacyWireGuardConfig", req,
+    return grpcUnary<
+      GetPrivacyWireGuardConfigRequest,
+      GetPrivacyWireGuardConfigResponse
+    >(
+      "operation.privacy.v1.PrivacyNetworkService",
+      "GetPrivacyWireGuardConfig",
+      req,
     );
   },
 
   manageComponent(req: ManageComponentRequest) {
     return grpcUnary<ManageComponentRequest, ManageComponentResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "ManageComponent", req,
+      "operation.privacy.v1.PrivacyNetworkService",
+      "ManageComponent",
+      req,
     );
   },
 
   getNetworkTopology(req: Partial<GetNetworkTopologyRequest> = {}) {
     return grpcUnary<GetNetworkTopologyRequest, GetNetworkTopologyResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "GetNetworkTopology", {
+      "operation.privacy.v1.PrivacyNetworkService",
+      "GetNetworkTopology",
+      {
         includeDetails: req.includeDetails ?? true,
       },
     );
@@ -707,7 +883,9 @@ export const privacyService = {
 
   healthCheck(req: Partial<HealthCheckRequest> = {}) {
     return grpcUnary<HealthCheckRequest, HealthCheckResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "HealthCheck", {
+      "operation.privacy.v1.PrivacyNetworkService",
+      "HealthCheck",
+      {
         checkWgcf: req.checkWgcf ?? true,
         checkOvs: req.checkOvs ?? true,
         checkXray: req.checkXray ?? true,
@@ -717,14 +895,24 @@ export const privacyService = {
   },
 
   configurePacketRouting(req: ConfigurePacketRoutingRequest) {
-    return grpcUnary<ConfigurePacketRoutingRequest, ConfigurePacketRoutingResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "ConfigurePacketRouting", req,
+    return grpcUnary<
+      ConfigurePacketRoutingRequest,
+      ConfigurePacketRoutingResponse
+    >(
+      "operation.privacy.v1.PrivacyNetworkService",
+      "ConfigurePacketRouting",
+      req,
     );
   },
 
   generateWireGuardKeyPair(req: GenerateWireGuardKeyPairRequest) {
-    return grpcUnary<GenerateWireGuardKeyPairRequest, GenerateWireGuardKeyPairResponse>(
-      "operation.privacy.v1.PrivacyNetworkService", "GenerateWireGuardKeyPair", req,
+    return grpcUnary<
+      GenerateWireGuardKeyPairRequest,
+      GenerateWireGuardKeyPairResponse
+    >(
+      "operation.privacy.v1.PrivacyNetworkService",
+      "GenerateWireGuardKeyPair",
+      req,
     );
   },
 };
@@ -734,31 +922,41 @@ export const privacyService = {
 export const registrationService = {
   sendMagicLink(req: SendMagicLinkRequest) {
     return grpcUnary<SendMagicLinkRequest, SendMagicLinkResponse>(
-      "operation.registration.v1.RegistrationService", "SendMagicLink", req,
+      "operation.registration.v1.RegistrationService",
+      "SendMagicLink",
+      req,
     );
   },
 
   verifyMagicLink(req: VerifyMagicLinkRequest) {
     return grpcUnary<VerifyMagicLinkRequest, VerifyMagicLinkResponse>(
-      "operation.registration.v1.RegistrationService", "VerifyMagicLink", req,
+      "operation.registration.v1.RegistrationService",
+      "VerifyMagicLink",
+      req,
     );
   },
 
   registerUser(req: RegisterUserRequest) {
     return grpcUnary<RegisterUserRequest, RegisterUserResponse>(
-      "operation.registration.v1.RegistrationService", "RegisterUser", req,
+      "operation.registration.v1.RegistrationService",
+      "RegisterUser",
+      req,
     );
   },
 
   getUserStatus(req: GetUserStatusRequest) {
     return grpcUnary<GetUserStatusRequest, GetUserStatusResponse>(
-      "operation.registration.v1.RegistrationService", "GetUserStatus", req,
+      "operation.registration.v1.RegistrationService",
+      "GetUserStatus",
+      req,
     );
   },
 
   listUsers(req: Partial<ListUsersRequest> = {}) {
     return grpcUnary<ListUsersRequest, ListUsersResponse>(
-      "operation.registration.v1.RegistrationService", "ListUsers", {
+      "operation.registration.v1.RegistrationService",
+      "ListUsers",
+      {
         limit: req.limit ?? 100,
         offset: req.offset ?? 0,
         includeAdminsOnly: req.includeAdminsOnly ?? false,
@@ -769,13 +967,17 @@ export const registrationService = {
 
   getWireGuardConfig(req: GetWireGuardConfigRequest) {
     return grpcUnary<GetWireGuardConfigRequest, GetWireGuardConfigResponse>(
-      "operation.registration.v1.RegistrationService", "GetWireGuardConfig", req,
+      "operation.registration.v1.RegistrationService",
+      "GetWireGuardConfig",
+      req,
     );
   },
 
   adminUserAction(req: AdminUserActionRequest) {
     return grpcUnary<AdminUserActionRequest, AdminUserActionResponse>(
-      "operation.registration.v1.RegistrationService", "AdminUserAction", req,
+      "operation.registration.v1.RegistrationService",
+      "AdminUserAction",
+      req,
     );
   },
 };
@@ -785,67 +987,89 @@ export const registrationService = {
 export const serviceManager = {
   start(name: string) {
     return grpcUnary<{ name: string }, { status: ServiceStatus }>(
-      "opdbus.services.v1.ServiceManager", "Start", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Start",
+      { name },
     );
   },
 
   stop(name: string) {
     return grpcUnary<{ name: string }, { status: ServiceStatus }>(
-      "opdbus.services.v1.ServiceManager", "Stop", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Stop",
+      { name },
     );
   },
 
   restart(name: string) {
     return grpcUnary<{ name: string }, { status: ServiceStatus }>(
-      "opdbus.services.v1.ServiceManager", "Restart", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Restart",
+      { name },
     );
   },
 
   reload(name: string) {
     return grpcUnary<{ name: string }, { status: ServiceStatus }>(
-      "opdbus.services.v1.ServiceManager", "Reload", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Reload",
+      { name },
     );
   },
 
   create(service: ServiceDef) {
     return grpcUnary<{ service: ServiceDef }, { service: ServiceDef }>(
-      "opdbus.services.v1.ServiceManager", "Create", { service },
+      "opdbus.services.v1.ServiceManager",
+      "Create",
+      { service },
     );
   },
 
   delete(name: string) {
     return grpcUnary<{ name: string }, Record<string, never>>(
-      "opdbus.services.v1.ServiceManager", "Delete", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Delete",
+      { name },
     );
   },
 
   get(name: string) {
     return grpcUnary<{ name: string }, GetServiceResponse>(
-      "opdbus.services.v1.ServiceManager", "Get", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Get",
+      { name },
     );
   },
 
   list(filter = "") {
     return grpcUnary<{ filter: string }, SvcMgrListResponse>(
-      "opdbus.services.v1.ServiceManager", "List", { filter },
+      "opdbus.services.v1.ServiceManager",
+      "List",
+      { filter },
     );
   },
 
   enable(name: string) {
     return grpcUnary<{ name: string }, Record<string, never>>(
-      "opdbus.services.v1.ServiceManager", "Enable", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Enable",
+      { name },
     );
   },
 
   disable(name: string) {
     return grpcUnary<{ name: string }, Record<string, never>>(
-      "opdbus.services.v1.ServiceManager", "Disable", { name },
+      "opdbus.services.v1.ServiceManager",
+      "Disable",
+      { name },
     );
   },
 
   watchStatus(req: Partial<WatchServicesRequest> = {}) {
     return grpcServerStream<WatchServicesRequest, ServiceEvent>(
-      "opdbus.services.v1.ServiceManager", "WatchStatus", {
+      "opdbus.services.v1.ServiceManager",
+      "WatchStatus",
+      {
         names: req.names ?? [],
       },
     );
@@ -857,13 +1081,17 @@ export const serviceManager = {
 export const mcpService = {
   health() {
     return grpcUnary<Record<string, never>, McpHealthResponse>(
-      "op.mcp.v1.McpService", "Health", {},
+      "op.mcp.v1.McpService",
+      "Health",
+      {},
     );
   },
 
   initialize(req: Partial<InitializeRequest> = {}) {
     return grpcUnary<InitializeRequest, InitializeResponse>(
-      "op.mcp.v1.McpService", "Initialize", {
+      "op.mcp.v1.McpService",
+      "Initialize",
+      {
         clientName: req.clientName ?? "web-ui",
         capabilities: req.capabilities ?? [],
       },
@@ -872,7 +1100,9 @@ export const mcpService = {
 
   listTools(req: Partial<ListToolsRequest> = {}) {
     return grpcUnary<ListToolsRequest, McpListToolsResponse>(
-      "op.mcp.v1.McpService", "ListTools", {
+      "op.mcp.v1.McpService",
+      "ListTools",
+      {
         limit: req.limit ?? 100,
         offset: req.offset ?? 0,
       },
@@ -881,19 +1111,25 @@ export const mcpService = {
 
   callTool(req: CallToolRequest) {
     return grpcUnary<CallToolRequest, CallToolResponse>(
-      "op.mcp.v1.McpService", "CallTool", req,
+      "op.mcp.v1.McpService",
+      "CallTool",
+      req,
     );
   },
 
   callToolStreaming(req: CallToolRequest) {
     return grpcServerStream<CallToolRequest, ToolOutput>(
-      "op.mcp.v1.McpService", "CallToolStreaming", req,
+      "op.mcp.v1.McpService",
+      "CallToolStreaming",
+      req,
     );
   },
 
   subscribe(req: Partial<McpSubscribeRequest> = {}) {
     return grpcServerStream<McpSubscribeRequest, McpEvent>(
-      "op.mcp.v1.McpService", "Subscribe", {
+      "op.mcp.v1.McpService",
+      "Subscribe",
+      {
         eventTypes: req.eventTypes ?? [],
       },
     );
@@ -905,7 +1141,9 @@ export const mcpService = {
 export const accountabilityService = {
   searchEpisodes(req: SearchEpisodesRequest) {
     return grpcUnary<SearchEpisodesRequest, SearchEpisodesResponse>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "SearchEpisodes", {
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "SearchEpisodes",
+      {
         query: req.query,
         outcomeClass: req.outcomeClass ?? "",
         pluginId: req.pluginId ?? "",
@@ -919,25 +1157,33 @@ export const accountabilityService = {
 
   getEpisode(req: GetEpisodeRequest) {
     return grpcUnary<GetEpisodeRequest, GetEpisodeResponse>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "GetEpisode", req,
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "GetEpisode",
+      req,
     );
   },
 
   getCollectionStats() {
     return grpcUnary<Record<string, never>, CollectionStatsResponse>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "GetCollectionStats", {},
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "GetCollectionStats",
+      {},
     );
   },
 
   chatWithContext(req: ChatWithContextRequest) {
     return grpcUnary<ChatWithContextRequest, ChatWithContextResponse>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "ChatWithContext", req,
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "ChatWithContext",
+      req,
     );
   },
 
   subscribeEpisodes(req: Partial<SubscribeEpisodesRequest> = {}) {
     return grpcServerStream<SubscribeEpisodesRequest, EpisodeEvent>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "SubscribeEpisodes", {
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "SubscribeEpisodes",
+      {
         pluginId: req.pluginId ?? "",
         outcomeClassFilter: req.outcomeClassFilter ?? "",
         includeExisting: req.includeExisting ?? false,
@@ -947,7 +1193,9 @@ export const accountabilityService = {
 
   getPiiPolicy() {
     return grpcUnary<Record<string, never>, GetPiiPolicyResponse>(
-      "operation.accountability.v1.ChatbotAccountabilityService", "GetPiiPolicy", {},
+      "operation.accountability.v1.ChatbotAccountabilityService",
+      "GetPiiPolicy",
+      {},
     );
   },
 };
@@ -957,7 +1205,9 @@ export const accountabilityService = {
 export const blockchainService = {
   getFootprints(req: Partial<GetFootprintsRequest> = {}) {
     return grpcUnary<GetFootprintsRequest, GetFootprintsResponse>(
-      "operation.blockchain.v1.BlockchainService", "GetFootprints", {
+      "operation.blockchain.v1.BlockchainService",
+      "GetFootprints",
+      {
         fromIndex: req.fromIndex ?? 0,
         toIndex: req.toIndex ?? 0,
         limit: req.limit ?? 100,
@@ -968,7 +1218,9 @@ export const blockchainService = {
 
   verifyChain(req: Partial<VerifyBlockchainRequest> = {}) {
     return grpcUnary<VerifyBlockchainRequest, VerifyBlockchainResponse>(
-      "operation.blockchain.v1.BlockchainService", "VerifyChain", {
+      "operation.blockchain.v1.BlockchainService",
+      "VerifyChain",
+      {
         fromIndex: req.fromIndex ?? 0,
         toIndex: req.toIndex ?? 0,
       },
@@ -977,13 +1229,17 @@ export const blockchainService = {
 
   getEmbeddingQueueStatus() {
     return grpcUnary<Record<string, never>, GetEmbeddingQueueStatusResponse>(
-      "operation.blockchain.v1.BlockchainService", "GetEmbeddingQueueStatus", {},
+      "operation.blockchain.v1.BlockchainService",
+      "GetEmbeddingQueueStatus",
+      {},
     );
   },
 
   getQdrantRoles() {
     return grpcUnary<Record<string, never>, GetQdrantRolesResponse>(
-      "operation.blockchain.v1.BlockchainService", "GetQdrantRoles", {},
+      "operation.blockchain.v1.BlockchainService",
+      "GetQdrantRoles",
+      {},
     );
   },
 };
@@ -993,13 +1249,17 @@ export const blockchainService = {
 export const btrfsService = {
   getSubvolumes() {
     return grpcUnary<Record<string, never>, GetSubvolumesResponse>(
-      "operation.btrfs.v1.BtrfsService", "GetSubvolumes", {},
+      "operation.btrfs.v1.BtrfsService",
+      "GetSubvolumes",
+      {},
     );
   },
 
   getSnapshots(req: Partial<BtrfsGetSnapshotsRequest> = {}) {
     return grpcUnary<BtrfsGetSnapshotsRequest, BtrfsGetSnapshotsResponse>(
-      "operation.btrfs.v1.BtrfsService", "GetSnapshots", {
+      "operation.btrfs.v1.BtrfsService",
+      "GetSnapshots",
+      {
         subvolume: req.subvolume ?? "",
         limit: req.limit ?? 50,
       },
@@ -1008,13 +1268,17 @@ export const btrfsService = {
 
   getSendState() {
     return grpcUnary<Record<string, never>, GetSendStateResponse>(
-      "operation.btrfs.v1.BtrfsService", "GetSendState", {},
+      "operation.btrfs.v1.BtrfsService",
+      "GetSendState",
+      {},
     );
   },
 
   getDrStatus() {
     return grpcUnary<Record<string, never>, GetDrStatusResponse>(
-      "operation.btrfs.v1.BtrfsService", "GetDrStatus", {},
+      "operation.btrfs.v1.BtrfsService",
+      "GetDrStatus",
+      {},
     );
   },
 };
@@ -1024,37 +1288,49 @@ export const btrfsService = {
 export const personaService = {
   listPersonas() {
     return grpcUnary<Record<string, never>, ListPersonasResponse>(
-      "operation.agents.v1.PersonaService", "ListPersonas", {},
+      "operation.agents.v1.PersonaService",
+      "ListPersonas",
+      {},
     );
   },
 
   getPersona(req: GetPersonaRequest) {
     return grpcUnary<GetPersonaRequest, GetPersonaResponse>(
-      "operation.agents.v1.PersonaService", "GetPersona", req,
+      "operation.agents.v1.PersonaService",
+      "GetPersona",
+      req,
     );
   },
 
   createPersona(req: CreatePersonaRequest) {
     return grpcUnary<CreatePersonaRequest, CreatePersonaResponse>(
-      "operation.agents.v1.PersonaService", "CreatePersona", req,
+      "operation.agents.v1.PersonaService",
+      "CreatePersona",
+      req,
     );
   },
 
   updatePersona(req: UpdatePersonaRequest) {
     return grpcUnary<UpdatePersonaRequest, UpdatePersonaResponse>(
-      "operation.agents.v1.PersonaService", "UpdatePersona", req,
+      "operation.agents.v1.PersonaService",
+      "UpdatePersona",
+      req,
     );
   },
 
   deletePersona(req: DeletePersonaRequest) {
     return grpcUnary<DeletePersonaRequest, DeletePersonaResponse>(
-      "operation.agents.v1.PersonaService", "DeletePersona", req,
+      "operation.agents.v1.PersonaService",
+      "DeletePersona",
+      req,
     );
   },
 
   listAgentRoutes() {
     return grpcUnary<Record<string, never>, ListAgentRoutesResponse>(
-      "operation.agents.v1.PersonaService", "ListAgentRoutes", {},
+      "operation.agents.v1.PersonaService",
+      "ListAgentRoutes",
+      {},
     );
   },
 };
@@ -1064,13 +1340,17 @@ export const personaService = {
 export const dataStoreService = {
   getDataStores() {
     return grpcUnary<Record<string, never>, GetDataStoresResponse>(
-      "operation.stores.v1.DataStoreService", "GetDataStores", {},
+      "operation.stores.v1.DataStoreService",
+      "GetDataStores",
+      {},
     );
   },
 
   getStoreDetail(req: GetStoreDetailRequest) {
     return grpcUnary<GetStoreDetailRequest, GetStoreDetailResponse>(
-      "operation.stores.v1.DataStoreService", "GetStoreDetail", req,
+      "operation.stores.v1.DataStoreService",
+      "GetStoreDetail",
+      req,
     );
   },
 };
@@ -1080,7 +1360,9 @@ export const dataStoreService = {
 export const embeddingService = {
   getQueue(req: Partial<GetEmbeddingQueueRequest> = {}) {
     return grpcUnary<GetEmbeddingQueueRequest, GetEmbeddingQueueResponse>(
-      "operation.embedding.v1.EmbeddingService", "GetQueue", {
+      "operation.embedding.v1.EmbeddingService",
+      "GetQueue",
+      {
         limit: req.limit ?? 50,
         statusFilter: req.statusFilter ?? "",
       },
@@ -1089,19 +1371,292 @@ export const embeddingService = {
 
   getWorkerStatus() {
     return grpcUnary<Record<string, never>, GetEmbeddingWorkerStatusResponse>(
-      "operation.embedding.v1.EmbeddingService", "GetWorkerStatus", {},
+      "operation.embedding.v1.EmbeddingService",
+      "GetWorkerStatus",
+      {},
     );
   },
 
   previewEmbeddingText(req: PreviewEmbeddingTextRequest) {
     return grpcUnary<PreviewEmbeddingTextRequest, PreviewEmbeddingTextResponse>(
-      "operation.embedding.v1.EmbeddingService", "PreviewEmbeddingText", req,
+      "operation.embedding.v1.EmbeddingService",
+      "PreviewEmbeddingText",
+      req,
     );
   },
 
   getChannelDiagnostics() {
     return grpcUnary<Record<string, never>, GetChannelDiagnosticsResponse>(
-      "operation.embedding.v1.EmbeddingService", "GetChannelDiagnostics", {},
+      "operation.embedding.v1.EmbeddingService",
+      "GetChannelDiagnostics",
+      {},
     );
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// D-BUS PASSTHROUGH SERVICE (operation.v1.DbusPassthrough)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const dbusPassthrough = {
+  call(req: {
+    bus: string;
+    destination: string;
+    path: string;
+    interface: string;
+    method: string;
+    jsonBody: string;
+  }) {
+    return grpcUnary<
+      {
+        bus: string;
+        destination: string;
+        path: string;
+        interface: string;
+        method: string;
+        json_body: string;
+      },
+      { success: boolean; json_result: string; error: string }
+    >("operation.v1.DbusPassthrough", "Call", {
+      bus: req.bus,
+      destination: req.destination,
+      path: req.path,
+      interface: req.interface,
+      method: req.method,
+      json_body: req.jsonBody,
+    });
+  },
+
+  get(req: {
+    bus: string;
+    destination: string;
+    path: string;
+    interface: string;
+    property: string;
+  }) {
+    return grpcUnary<
+      {
+        bus: string;
+        destination: string;
+        path: string;
+        interface: string;
+        property: string;
+      },
+      { success: boolean; json_value: string; error: string }
+    >("operation.v1.DbusPassthrough", "Get", req);
+  },
+
+  set(req: {
+    bus: string;
+    destination: string;
+    path: string;
+    interface: string;
+    property: string;
+    json_value: string;
+  }) {
+    return grpcUnary<
+      {
+        bus: string;
+        destination: string;
+        path: string;
+        interface: string;
+        property: string;
+        json_value: string;
+      },
+      { success: boolean; error: string }
+    >("operation.v1.DbusPassthrough", "Set", req);
+  },
+
+  watch(req: {
+    bus: string;
+    destination: string;
+    path: string;
+    interface: string;
+    signal_names?: string[];
+  }) {
+    return grpcServerStream<
+      {
+        bus: string;
+        destination: string;
+        path: string;
+        interface: string;
+        signal_names: string[];
+      },
+      {
+        signal_name: string;
+        path: string;
+        interface: string;
+        json_body: string;
+        timestamp?: { seconds: number; nanos: number };
+      }
+    >("operation.v1.DbusPassthrough", "Watch", {
+      bus: req.bus,
+      destination: req.destination,
+      path: req.path,
+      interface: req.interface,
+      signal_names: req.signal_names ?? [],
+    });
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ASSISTANT SERVICES (via D-Bus passthrough → ai.assistant.v1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+import type {
+  SoulMemory,
+  GetSoulMemoryRequest,
+  UpdateSoulMemoryRequest,
+  ListSoulMemoriesRequest,
+  ListSoulMemoriesResponse,
+  MemoryEntry,
+  ReadMemoryRequest,
+  ReadMemoryResponse,
+  WriteMemoryRequest,
+  WriteMemoryResponse,
+  SearchMemoryRequest,
+  SearchMemoryResponse,
+  MemoryStats,
+  MemoryNamespace,
+  SetMemoryNamespaceRequest,
+  ListMemoryNamespacesResponse,
+  Agent,
+  ListAgentsResponse,
+  ListSessionsResponse,
+  CreateSessionRequest,
+  SessionMessage,
+  Run,
+  StartRunRequest,
+  ListCronJobsResponse,
+  CreateCronJobRequest,
+  CronJob,
+} from "./types/assistant";
+
+const ASSISTANT_BUS = "session";
+const ASSISTANT_DEST = "ai.assistant.v1";
+const ASSISTANT_PATH = "/ai/assistant";
+const ASSISTANT_IFACE = "ai.assistant.v1";
+
+async function assistantCall(method: string, body: unknown): Promise<unknown> {
+  const resp = await dbusPassthrough.call({
+    bus: ASSISTANT_BUS,
+    destination: ASSISTANT_DEST,
+    path: ASSISTANT_PATH,
+    interface: ASSISTANT_IFACE,
+    method,
+    jsonBody: JSON.stringify(body),
+  });
+  if (!resp.success) {
+    throw new Error(`Assistant D-Bus call '${method}' failed: ${resp.error}`);
+  }
+  return JSON.parse(resp.json_result);
+}
+
+export const assistantService = {
+  // ── Soul ────────────────────────────────────────────────────────────────
+  getSoulMemory(req: GetSoulMemoryRequest): Promise<SoulMemory> {
+    return assistantCall("GetSoulMemory", req) as Promise<SoulMemory>;
+  },
+  updateSoulMemory(req: UpdateSoulMemoryRequest): Promise<SoulMemory> {
+    return assistantCall("UpdateSoulMemory", req) as Promise<SoulMemory>;
+  },
+  deleteSoulMemory(agentId: string): Promise<void> {
+    return assistantCall("DeleteSoulMemory", { agent_id: agentId }).then(
+      () => {},
+    );
+  },
+  listSoulMemories(
+    req?: Partial<ListSoulMemoriesRequest>,
+  ): Promise<ListSoulMemoriesResponse> {
+    return assistantCall(
+      "ListSoulMemories",
+      req ?? {},
+    ) as Promise<ListSoulMemoriesResponse>;
+  },
+
+  // ── Namespace ────────────────────────────────────────────────────────────
+  getMemoryNamespace(agentId: string): Promise<MemoryNamespace> {
+    return assistantCall("GetMemoryNamespace", {
+      agent_id: agentId,
+    }) as Promise<MemoryNamespace>;
+  },
+  setMemoryNamespace(req: SetMemoryNamespaceRequest): Promise<MemoryNamespace> {
+    return assistantCall("SetMemoryNamespace", req) as Promise<MemoryNamespace>;
+  },
+  clearMemoryNamespace(agentId: string): Promise<void> {
+    return assistantCall("ClearMemoryNamespace", { agent_id: agentId }).then(
+      () => {},
+    );
+  },
+  listMemoryNamespaces(): Promise<ListMemoryNamespacesResponse> {
+    return assistantCall(
+      "ListMemoryNamespaces",
+      {},
+    ) as Promise<ListMemoryNamespacesResponse>;
+  },
+
+  // ── Memory ───────────────────────────────────────────────────────────────
+  readMemory(req: ReadMemoryRequest): Promise<ReadMemoryResponse> {
+    return assistantCall("ReadMemory", req) as Promise<ReadMemoryResponse>;
+  },
+  writeMemory(req: WriteMemoryRequest): Promise<WriteMemoryResponse> {
+    return assistantCall("WriteMemory", req) as Promise<WriteMemoryResponse>;
+  },
+  deleteMemory(
+    namespace: string,
+    keys: string[],
+  ): Promise<{ deleted: number }> {
+    return assistantCall("DeleteMemory", { namespace, keys }) as Promise<{
+      deleted: number;
+    }>;
+  },
+  searchMemory(req: SearchMemoryRequest): Promise<SearchMemoryResponse> {
+    return assistantCall("SearchMemory", req) as Promise<SearchMemoryResponse>;
+  },
+  getMemoryStats(namespace: string): Promise<MemoryStats> {
+    return assistantCall("GetMemoryStats", {
+      namespace,
+    }) as Promise<MemoryStats>;
+  },
+
+  // ── Agents ──────────────────────────────────────────────────────────────
+  listAgents(): Promise<ListAgentsResponse> {
+    return assistantCall("ListAgents", {}) as Promise<ListAgentsResponse>;
+  },
+  getAgent(id: string): Promise<Agent> {
+    return assistantCall("GetAgent", { id }) as Promise<Agent>;
+  },
+  startRun(req: StartRunRequest): Promise<Run> {
+    return assistantCall("StartRun", req) as Promise<Run>;
+  },
+
+  // ── Sessions ─────────────────────────────────────────────────────────────
+  listSessions(agentId?: string): Promise<ListSessionsResponse> {
+    return assistantCall("ListSessions", {
+      agent_id: agentId ?? "",
+    }) as Promise<ListSessionsResponse>;
+  },
+  createSession(req: CreateSessionRequest): Promise<{ id: string }> {
+    return assistantCall("CreateSession", req) as Promise<{ id: string }>;
+  },
+  sendMessage(sessionId: string, content: string): Promise<SessionMessage> {
+    return assistantCall("SendMessage", {
+      session_id: sessionId,
+      content,
+    }) as Promise<SessionMessage>;
+  },
+
+  // ── Cron ─────────────────────────────────────────────────────────────────
+  listCronJobs(): Promise<ListCronJobsResponse> {
+    return assistantCall("ListCronJobs", {}) as Promise<ListCronJobsResponse>;
+  },
+  createCronJob(req: CreateCronJobRequest): Promise<CronJob> {
+    return assistantCall("CreateCronJob", req) as Promise<CronJob>;
+  },
+  deleteCronJob(id: string): Promise<void> {
+    return assistantCall("DeleteCronJob", { id }).then(() => {});
+  },
+  triggerCronJob(id: string): Promise<void> {
+    return assistantCall("TriggerCronJob", { id }).then(() => {});
   },
 };

@@ -1,15 +1,31 @@
 // ── Bridge services ──────────────────────────────────────────────────────────
 export {
-  stateSync, pluginService, eventChainService,
-  ovsdbMirror, runtimeMirror, componentRegistry,
+  stateSync,
+  pluginService,
+  eventChainService,
+  ovsdbMirror,
+  runtimeMirror,
+  componentRegistry,
   // Domain services
-  mailService, privacyService, registrationService,
-  serviceManager, mcpService, accountabilityService,
+  mailService,
+  privacyService,
+  registrationService,
+  serviceManager,
+  mcpService,
+  accountabilityService,
   // Architecture services (§2,5,6,8,9)
-  blockchainService, btrfsService, personaService,
-  dataStoreService, embeddingService,
+  blockchainService,
+  btrfsService,
+  personaService,
+  dataStoreService,
+  embeddingService,
+  // D-Bus passthrough
+  dbusPassthrough,
+  // Assistant services (via D-Bus passthrough)
+  assistantService,
   // Transport
-  getTransport, resetTransport,
+  getTransport,
+  resetTransport,
 } from "./client";
 
 // ── Types: operation.v1 (re-exported from split files) ──────────────────────
@@ -24,12 +40,32 @@ export * from "./types/privacy";
 export * from "./types/registration";
 export * from "./types/service-manager";
 export type {
-  ServerMode, ParameterType, McpRequest, McpResponse, McpError,
-  SubscribeRequest as McpSubscribeRequest, McpEvent, HealthRequest, HealthResponse as McpHealthResponse,
-  InitializeRequest, InitializeResponse, ListToolsRequest, ListToolsResponse as McpListToolsResponse,
-  ToolInfo, ToolSchema, ToolParameter, FileOperation, FileMode,
-  FileSystemArgs, NetworkArgs, DatabaseArgs, ShellArgs, ToolArguments,
-  CallToolRequest, CallToolResponse, ToolOutput
+  ServerMode,
+  ParameterType,
+  McpRequest,
+  McpResponse,
+  McpError,
+  SubscribeRequest as McpSubscribeRequest,
+  McpEvent,
+  HealthRequest,
+  HealthResponse as McpHealthResponse,
+  InitializeRequest,
+  InitializeResponse,
+  ListToolsRequest,
+  ListToolsResponse as McpListToolsResponse,
+  ToolInfo,
+  ToolSchema,
+  ToolParameter,
+  FileOperation,
+  FileMode,
+  FileSystemArgs,
+  NetworkArgs,
+  DatabaseArgs,
+  ShellArgs,
+  ToolArguments,
+  CallToolRequest,
+  CallToolResponse,
+  ToolOutput,
 } from "./types/mcp";
 export * from "./types/accountability";
 export * from "./types/blockchain";
@@ -38,5 +74,12 @@ export * from "./types/persona";
 export * from "./types/data-stores";
 export * from "./types/embedding";
 
+// ── Types: assistant (via D-Bus passthrough) ─────────────────────────────────
+export * from "./types/assistant";
+
 // ── Protobuf helpers ────────────────────────────────────────────────────────
-export { structToObject, valueToJs, objectToStruct } from "./google/protobuf/struct";
+export {
+  structToObject,
+  valueToJs,
+  objectToStruct,
+} from "./google/protobuf/struct";
